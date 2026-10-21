@@ -46,6 +46,12 @@ let dbPromise = null;
 const WRITE_TIMEOUT = 4000;
 const READ_TIMEOUT = 20000;
 
+/* Bulk operations (import, emptying a big trash) legitimately need longer;
+   give them a few milliseconds per row, capped so a true stall still ends. */
+function bulkTimeout(count) {
+  return Math.min(WRITE_TIMEOUT + count * 2, 30000);
+}
+
 function forgetDatabase(db = null) {
   dbPromise = null;
   if (db) {
@@ -141,8 +147,10 @@ function openDatabase() {
   return dbPromise;
 }
 
-function transact(storeNames, mode, work, attempt = 0) {
+function transact(storeNames, mode, work, options = {}) {
   const names = Array.isArray(storeNames) ? storeNames : [storeNames];
+  const attempt = options.attempt || 0;
+  const limit = options.timeout || (mode === "readwrite" ? WRITE_TIMEOUT : READ_TIMEOUT);
 
   return openDatabase()
     .then(
@@ -187,7 +195,7 @@ function transact(storeNames, mode, work, attempt = 0) {
                 "timeout"
               )
             );
-          }, mode === "readwrite" ? WRITE_TIMEOUT : READ_TIMEOUT);
+          }, limit);
 
           // Attach these before issuing the request: the transaction can
           // never complete without these handlers being in place.
@@ -213,7 +221,7 @@ function transact(storeNames, mode, work, attempt = 0) {
       // connection. The work is replayed with the same values and keys,
       // so a late commit cannot produce a duplicate.
       if (attempt === 0 && error?.code === "timeout") {
-        return transact(storeNames, mode, work, 1);
+        return transact(storeNames, mode, work, { attempt: 1, timeout: limit });
       }
       throw error;
     });
@@ -240,10 +248,15 @@ export const db = {
 
   putMany(store, values) {
     if (!values.length) return Promise.resolve([]);
-    return transact(store, "readwrite", (stores) => {
-      values.forEach((value) => stores[store].put(value));
-      return null;
-    }).then(() => values);
+    return transact(
+      store,
+      "readwrite",
+      (stores) => {
+        values.forEach((value) => stores[store].put(value));
+        return null;
+      },
+      { timeout: bulkTimeout(values.length) }
+    ).then(() => values);
   },
 
   remove(store, key) {
@@ -252,10 +265,15 @@ export const db = {
 
   removeMany(store, keys) {
     if (!keys.length) return Promise.resolve();
-    return transact(store, "readwrite", (stores) => {
-      keys.forEach((key) => stores[store].delete(key));
-      return null;
-    });
+    return transact(
+      store,
+      "readwrite",
+      (stores) => {
+        keys.forEach((key) => stores[store].delete(key));
+        return null;
+      },
+      { timeout: bulkTimeout(keys.length) }
+    );
   },
 
   clear(store) {
