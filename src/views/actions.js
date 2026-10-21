@@ -155,8 +155,11 @@ function bookForm({ title = "", subtitle = "", cover = {} } = {}) {
   const style = COVER_STYLES.includes(cover.style) ? cover.style : "cloth";
   let accent = cover.accent || STYLE_DEFAULT[style];
 
-  const preview = h("span", { class: "cover", dataset: { style }, "aria-hidden": "true" });
-  Object.assign(preview.style, { width: "5.4rem", aspectRatio: "3 / 4.3", flex: "0 0 auto" });
+  const preview = h("span", {
+    class: "cover cover--preview",
+    dataset: { style },
+    "aria-hidden": "true",
+  });
   preview.innerHTML = `
     <span class="cover-kicker">Diary</span>
     <span class="cover-title"></span>
@@ -279,6 +282,7 @@ export async function createBookFlow({ thenWrite = false, date = null } = {}) {
     lede: "A book is a diary you write in. Make one for a year, a trip, or a season of your life.",
     body: form.body,
     submitLabel: "Create book",
+    wide: true,
     onSubmit: () => store.createBook(form.read()),
     initialFocus: form.focus,
     closeValue: null,
@@ -302,6 +306,7 @@ export async function bookSettingsFlow(book) {
     lede: "Title, subtitle, and cover. Changes appear everywhere the book does.",
     body: form.body,
     submitLabel: "Save changes",
+    wide: true,
     onSubmit: () => store.updateBook(book.id, form.read()),
     initialFocus: form.focus,
     closeValue: null,

@@ -29,7 +29,14 @@ export function h(tag, attrs = {}, ...children) {
     else if (key === "text") node.textContent = value;
     else if (key === "html") node.innerHTML = value;
     else if (key === "dataset") Object.assign(node.dataset, value);
-    else if (key === "style" && typeof value === "object") Object.assign(node.style, value);
+    else if (key === "style" && typeof value === "object") {
+      // Object.assign skips custom properties (--swatch, --cover); set those
+      // through setProperty so the swatches and previews actually get a colour.
+      for (const [prop, val] of Object.entries(value)) {
+        if (prop.startsWith("--")) node.style.setProperty(prop, val);
+        else node.style[prop] = val;
+      }
+    }
     else if (key.startsWith("on") && typeof value === "function") {
       node.addEventListener(key.slice(2).toLowerCase(), value);
     } else if (value === true) node.setAttribute(key, "");

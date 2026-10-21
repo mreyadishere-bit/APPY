@@ -249,19 +249,32 @@ export function homeView() {
         eyebrow: `${formatWeekday(todayISO())}, ${formatDate(todayISO(), "full")}`,
         title: greeting,
       })}
-      <div class="empty">
-        <p class="label is-accent">Begin</p>
-        <h2 class="display">A diary is just a few sentences, kept.</h2>
-        <p>APPY keeps your writing on this device, inside a book you choose. No account, no feed, no one reading over your shoulder.</p>
-        <ol class="empty-steps">
-          <li>Make a book — a year, a trip, a season of your life.</li>
-          <li>Write an entry. Title, date, and as much or as little as you like.</li>
-          <li>Open the book when you want to read your days back as pages.</li>
-        </ol>
-        <div class="empty-actions">
-          <button class="btn btn--primary" type="button" data-action="new-book">Create your first book</button>
-          <a class="btn" href="#/settings">About your data</a>
+      <div class="empty empty--welcome">
+        <div class="empty-copy">
+          <p class="label is-accent">Begin</p>
+          <h2 class="display">A diary is just a few sentences, kept.</h2>
+          <p>APPY keeps your writing on this device, inside a book you choose. No account, no feed, no one reading over your shoulder.</p>
+          <ol class="empty-steps">
+            <li>Make a book — a year, a trip, a season of your life.</li>
+            <li>Write an entry. Title, date, and as much or as little as you like.</li>
+            <li>Open the book when you want to read your days back as pages.</li>
+          </ol>
+          <div class="empty-actions">
+            <button class="btn btn--primary" type="button" data-action="new-book">Create your first book</button>
+            <a class="btn" href="#/settings">About your data</a>
+          </div>
         </div>
+        <aside class="empty-art" aria-hidden="true">
+          <span class="cover cover--lg empty-art-book" data-style="cloth">
+            <span class="cover-kicker">A private diary</span>
+            <span class="cover-title">Your days,<br />kept in books.</span>
+            <span>
+              <span class="cover-rule"></span>
+              <span class="cover-foot">This device only</span>
+            </span>
+          </span>
+          <span class="empty-art-note">No accounts · No feed</span>
+        </aside>
       </div>
     `;
   }

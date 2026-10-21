@@ -176,7 +176,9 @@ export function modal({
         return;
       }
 
+      const idleLabel = submit.textContent;
       submit.disabled = true;
+      submit.textContent = "Working…";
       try {
         const value = await onSubmit(form);
         finish(value === undefined ? true : value);
@@ -184,6 +186,7 @@ export function modal({
         errorLine.textContent = error?.message || "That did not work. Try again.";
         errorLine.hidden = false;
         submit.disabled = false;
+        submit.textContent = idleLabel;
       }
     });
 

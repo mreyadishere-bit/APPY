@@ -57,10 +57,24 @@ ul {
   padding: 0;
 }
 
-img,
-svg {
+img {
   display: block;
   max-width: 100%;
+}
+
+/* Icons are inline drawings: give every one a size and a stroke so a button
+   never inherits the SVG default canvas (300x150) or a black fill. Specific
+   places (theme button, reader tools, search field) can still override. */
+svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  max-width: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 a {

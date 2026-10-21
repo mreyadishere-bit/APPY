@@ -46,6 +46,7 @@ function renderRail() {
     </button>
 
     <nav class="rail-nav" aria-label="Sections">
+      <a href="#/" data-nav="home">Home</a>
       <a href="#/today" data-nav="today">Today</a>
       <a href="#/library" data-nav="library">Library <span class="rail-count" data-count="books"></span></a>
       <a href="#/search" data-nav="search">Search</a>
