@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Pages build output
+_site/
+.jekyll-cache/
+
+# Logs
+*.log

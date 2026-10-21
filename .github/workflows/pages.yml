@@ -1,0 +1,64 @@
+name: Deploy APPY to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JavaScript syntax
+        run: node --check src/app.js
+
+      - name: Prepare static site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -r index.html 404.html style.css src _site/
+          touch _site/.nojekyll
+          # Cache-bust assets with the commit SHA so browsers always get fresh files.
+          sed -i "s|src/app.js|src/app.js?v=${GITHUB_SHA::12}|g" _site/index.html
+          sed -i "s|style.css|style.css?v=${GITHUB_SHA::12}|g" _site/index.html
+
+      - name: Assert build output
+        run: |
+          set -euo pipefail
+          test -s _site/index.html
+          test -s _site/style.css
+          test -s _site/src/app.js
+          grep -q "APPY" _site/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4

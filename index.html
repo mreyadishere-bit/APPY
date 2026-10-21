@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APPY</title>
+  <meta name="description" content="APPY — a fast, modern web app." />
+  <meta name="theme-color" content="#6366f1" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/APPY/">
+      <span class="brand-mark" aria-hidden="true">⚡</span>
+      <span class="brand-name">APPY</span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#about">About</a>
+      <a class="btn btn-ghost" href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle colour theme">
+      <span class="theme-icon" aria-hidden="true">◐</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Now live on GitHub Pages</p>
+      <h1>Welcome to <span class="grad">APPY</span></h1>
+      <p class="lede">
+        A clean starting point that deploys itself. Every push to
+        <code>main</code> ships straight to production.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#features">Explore</a>
+        <a class="btn btn-ghost" href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">View source</a>
+      </div>
+      <dl class="stats">
+        <div><dt>Deploy</dt><dd id="deployStatus">automatic</dd></div>
+        <div><dt>Stack</dt><dd>HTML · CSS · JS</dd></div>
+        <div><dt>Host</dt><dd>GitHub Pages</dd></div>
+      </dl>
+    </section>
+
+    <section id="features" class="features">
+      <h2>Built to move</h2>
+      <div class="cards">
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">⎔</div>
+          <h3>Zero dependencies</h3>
+          <p>No build step, no bundler, no framework. The files you write are the files that ship.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">⤴</div>
+          <h3>Push to deploy</h3>
+          <p>A GitHub Actions workflow publishes every commit to <code>main</code> in under a minute.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">◐</div>
+          <h3>Light &amp; dark</h3>
+          <p>Respects your system theme, remembers your choice, and switches instantly.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">◎</div>
+          <h3>Fully responsive</h3>
+          <p>Fluid type and grid layouts that hold up from a watch face to an ultrawide monitor.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="about" class="about">
+      <h2>About</h2>
+      <p>
+        APPY is where it starts. Edit <code>index.html</code>, <code>style.css</code>
+        or <code>src/app.js</code> and push — the live site updates itself.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year">2026</span> APPY · Built with plain HTML, CSS &amp; JavaScript</p>
+  </footer>
+
+  <script src="src/app.js"></script>
+</body>
+</html>
