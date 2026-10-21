@@ -1,164 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>APPY — a diary kept in books</title>
-  <meta name="description" content="APPY is a diary for everyday life. Write into folders and books, keep everything on your own device, and read it back as pages that turn." />
-  <meta name="theme-color" content="#f7f4ee" />
+  <meta name="description" content="APPY is a private diary for everyday life. Write entries into books, group them in folders, search everything instantly, and read your days back as pages that turn. Everything stays on your device." />
+  <meta name="theme-color" content="#f5f1e6" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="APPY — a diary kept in books" />
-  <meta property="og:description" content="A diary for everyday life. Folders hold books, books hold pages, and everything stays on your device." />
+  <meta property="og:description" content="A private diary for everyday life. Books hold entries, folders group them, and everything stays on your device." />
   <meta property="og:image" content="https://mreyadishere-bit.github.io/APPY/og.png" />
   <meta property="og:url" content="https://mreyadishere-bit.github.io/APPY/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="APPY — a diary kept in books" />
-  <meta name="twitter:description" content="A diary for everyday life. Folders hold books, books hold pages, and everything stays on your device." />
+  <meta name="twitter:description" content="A private diary for everyday life. Books hold entries, folders group them, and everything stays on your device." />
   <meta name="twitter:image" content="https://mreyadishere-bit.github.io/APPY/og.png" />
 
   <link rel="canonical" href="https://mreyadishere-bit.github.io/APPY/" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%23f7f4ee'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' text-anchor='middle' fill='%239a4a2f'%3EA%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%239c4a2f'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' text-anchor='middle' fill='%23fff6ee'%3EA%3C/text%3E%3C/svg%3E"
+  />
+
+  <script>
+    // Paint the chosen theme before the first frame. Preferences only.
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem("appy:settings") || "{}");
+        var theme = saved && saved.theme;
+        if (theme !== "light" && theme !== "dark") {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = theme;
+      } catch (error) {
+        /* first run, or storage blocked */
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="styles/reader.css" />
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
+  <a class="skip-link" href="#view">Skip to content</a>
 
-  <header class="masthead">
-    <div class="wrap masthead-inner">
-      <a class="wordmark" href="/APPY/">APPY</a>
-      <p class="masthead-meta">A diary, kept well</p>
-      <nav class="masthead-nav" aria-label="Main">
-        <a href="write.html">Write</a>
-        <a href="read.html">Read</a>
-      </nav>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
-        <span class="toggle-dot" aria-hidden="true"></span>
-        <span class="toggle-label">Light</span>
-      </button>
+  <div class="app">
+    <header class="rail" id="rail" aria-label="APPY"></header>
+    <header class="mobile-bar" id="mobileBar"></header>
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+
+  <div class="toast-root" id="toastRoot"></div>
+
+  <noscript>
+    <div style="max-width: 34rem; margin: 4rem auto; padding: 2rem; font-family: Georgia, serif">
+      <h1>APPY needs JavaScript</h1>
+      <p>
+        The diary is stored inside your browser, so the page needs JavaScript to open the
+        database and lay out the pages. Nothing is sent anywhere. Please enable JavaScript
+        for this site and reload.
+      </p>
     </div>
-  </header>
+  </noscript>
 
-  <main id="main">
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <div class="hero-text">
-          <p class="label">Everyday life, written down</p>
-          <h1>Your days,<br />kept in books.</h1>
-          <p class="lede">
-            APPY is a diary for the ordinary days. Write into folders,
-            fill books page by page, and read it all back as something
-            you can hold — not a feed you scroll past.
-          </p>
-          <p class="hero-actions">
-            <a class="text-link" href="write.html">Start a diary <span aria-hidden="true">→</span></a>
-            <a class="text-link quiet" href="read.html">Read a sample book</a>
-          </p>
-        </div>
-
-        <figure class="hero-figure" id="reading-room">
-          <div class="book" id="book" role="img" aria-label="An open diary with pages of writing">
-            <div class="book-spread">
-              <div class="page page-left">
-                <span class="page-date">14 March</span>
-                <span class="ink-line w-90"></span>
-                <span class="ink-line w-76"></span>
-                <span class="ink-line w-84"></span>
-                <span class="ink-line w-52"></span>
-                <span class="ink-line w-88"></span>
-                <span class="ink-line w-64"></span>
-                <span class="ink-line w-40"></span>
-              </div>
-              <div class="page page-right">
-                <span class="page-date">15 March</span>
-                <span class="ink-line w-84"></span>
-                <span class="ink-line w-92"></span>
-                <span class="ink-line w-58"></span>
-                <span class="ink-line w-80"></span>
-                <span class="ink-line w-70"></span>
-                <span class="ink-line w-34"></span>
-              </div>
-              <button class="page-turn" id="pageTurn" type="button" aria-label="Turn the page">
-                <span class="turn-hint">Turn</span>
-              </button>
-              <div class="spine" aria-hidden="true"></div>
-            </div>
-            <figcaption class="figure-caption">
-              Reading back, one page at a time.
-            </figcaption>
-          </div>
-        </figure>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="shelf">
-      <div class="wrap section-grid">
-        <p class="num" aria-hidden="true">01</p>
-        <div class="section-body">
-          <h2 id="shelf">A shelf, not a search box</h2>
-          <p>
-            Diaries are organised the way you actually think about them.
-            Folders hold books. Books hold pages. A book can be a year, a
-            trip, a difficult month, or the week you moved house.
-          </p>
-          <p class="aside">
-            Nothing is buried in an endless feed, and nothing is sorted by
-            a machine that knows better than you.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="device">
-      <div class="wrap section-grid flip">
-        <p class="num" aria-hidden="true">02</p>
-        <div class="section-body">
-          <h2 id="device">It stays on your device</h2>
-          <p>
-            Your entries are saved on the device you write them on, inside
-            the folders and books you made. The diary is yours in the plain
-            sense: it lives where you do.
-          </p>
-          <p class="aside">
-            Write on the bus. Write with the wifi off. The page is already
-            there.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="read">
-      <div class="wrap section-grid">
-        <p class="num" aria-hidden="true">03</p>
-        <div class="section-body">
-          <h2 id="read">Read it like it was printed</h2>
-          <p>
-            The same diary opens on the website as a book you can turn
-            through — covers that open, pages that move. Reading back what
-            you wrote should feel like reading, not like scrolling through
-            your own archive.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section class="pull">
-      <div class="wrap">
-        <blockquote>
-          <p>A diary should be a place you return to, not a file you maintain.</p>
-        </blockquote>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <p class="footer-mark">APPY</p>
-      <p class="footer-note">Written on your device, read at your pace.</p>
-      <p class="footer-copy">© <span id="year">2026</span> · <a class="footer-link" href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">Source</a></p>
-    </div>
-  </footer>
-
-  <script src="src/app.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,150 @@
+/* ============================================================
+   APPY — design tokens
+   One warm editorial palette, two schemes, one set of scales.
+   Nothing here paints; base.css and app.css consume these.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Paper and ink */
+  --paper: #f5f1e6;
+  --paper-2: #eee8d9;
+  --surface: #fffdf7;
+  --surface-2: #faf6ea;
+  --surface-3: #f2ecdd;
+
+  --ink: #1a1710;
+  --ink-2: #3f3a30;
+  --muted: #776f5f;
+  --faint: #9b9484;
+
+  --rule: #ddd5c2;
+  --rule-2: #e8e1d0;
+
+  /* Accents */
+  --clay: #9c4a2f;
+  --clay-2: #7c3a23;
+  --clay-wash: #f1e3db;
+  --olive: #58654a;
+  --indigo: #3e4a62;
+  --gold: #9d7f42;
+  --danger: #a03427;
+  --danger-wash: #f6e3df;
+  --ok: #4d6a48;
+
+  --focus: #9c4a2f;
+  --select: #e8d9bf;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(44, 35, 22, 0.05), 0 10px 24px -18px rgba(44, 35, 22, 0.4);
+  --shadow-2: 0 1px 3px rgba(44, 35, 22, 0.06), 0 22px 48px -28px rgba(44, 35, 22, 0.45);
+  --shadow-3: 0 2px 6px rgba(44, 35, 22, 0.08), 0 40px 80px -40px rgba(44, 35, 22, 0.55);
+  --shadow-book: 0 26px 50px -28px rgba(38, 27, 14, 0.55), 0 4px 10px rgba(38, 27, 14, 0.12);
+
+  /* Geometry */
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 8px;
+  --r-pill: 999px;
+
+  /* Type */
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino,
+    "Hoefler Text", Georgia, serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  --t-xs: 0.6875rem;
+  --t-sm: 0.8125rem;
+  --t-base: 1rem;
+  --t-md: 1.0625rem;
+  --t-lg: 1.25rem;
+  --t-xl: 1.5rem;
+  --t-2xl: 2rem;
+  --t-3xl: clamp(2.1rem, 4.4vw, 3.1rem);
+  --t-4xl: clamp(2.6rem, 6vw, 4.2rem);
+
+  /* Space */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+
+  --rail: 15.5rem;
+  --measure: 34rem;
+  --ease: cubic-bezier(0.22, 0.61, 0.24, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 140ms;
+  --mid: 240ms;
+  --slow: 420ms;
+
+  /* Book covers */
+  --cover-linen: #6a6250;
+  --cover-cloth: #3f4f5c;
+  --cover-leather: #6b3a2a;
+  --cover-paper: #b8a884;
+  --cover-night: #232833;
+  --cover-foil: #e6d8b4;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #131210;
+  --paper-2: #1a1815;
+  --surface: #1c1a16;
+  --surface-2: #221f1a;
+  --surface-3: #292521;
+
+  --ink: #efe9dc;
+  --ink-2: #cdc5b5;
+  --muted: #9a9183;
+  --faint: #766f63;
+
+  --rule: #322d25;
+  --rule-2: #28241d;
+
+  --clay: #c97a55;
+  --clay-2: #dc9370;
+  --clay-wash: #2c211b;
+  --olive: #93a382;
+  --indigo: #93a2c2;
+  --gold: #c0a066;
+  --danger: #d9735f;
+  --danger-wash: #2e1d1a;
+  --ok: #8fae86;
+
+  --focus: #d9926c;
+  --select: #3a3126;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -18px rgba(0, 0, 0, 0.6);
+  --shadow-2: 0 1px 3px rgba(0, 0, 0, 0.45), 0 22px 48px -28px rgba(0, 0, 0, 0.7);
+  --shadow-3: 0 2px 6px rgba(0, 0, 0, 0.5), 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+  --shadow-book: 0 26px 50px -28px rgba(0, 0, 0, 0.8), 0 4px 10px rgba(0, 0, 0, 0.4);
+
+  --cover-linen: #5b5445;
+  --cover-cloth: #33424f;
+  --cover-leather: #5b3225;
+  --cover-paper: #9c8e6e;
+  --cover-night: #1a1e26;
+  --cover-foil: #d9cba8;
+}
+
+/* Reader typography scale, driven by the reader's Aa control. */
+:root {
+  --reader-scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fast: 1ms;
+    --mid: 1ms;
+    --slow: 1ms;
+  }
+}

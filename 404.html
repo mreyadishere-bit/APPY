@@ -1,41 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>A missing page — APPY</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/APPY/style.css" />
+  <link rel="canonical" href="https://mreyadishere-bit.github.io/APPY/" />
+  <meta name="theme-color" content="#f5f1e6" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f5f1e6;
+      --paper-2: #eee8d9;
+      --ink: #1a1710;
+      --ink-2: #3f3a30;
+      --muted: #776f5f;
+      --rule: #ddd5c2;
+      --clay: #9c4a2f;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #131210;
+        --paper-2: #1a1815;
+        --ink: #efe9dc;
+        --ink-2: #cdc5b5;
+        --muted: #9a9183;
+        --rule: #322d25;
+        --clay: #c97a55;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--paper);
+      color: var(--ink);
+      font: 1.0625rem/1.65 var(--serif);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--clay); text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+    a:hover { color: var(--clay); text-decoration-thickness: 2px; }
+    :focus-visible { outline: 2px solid var(--clay); outline-offset: 3px; border-radius: 2px; }
+
+    .bar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.1rem clamp(1.25rem, 4vw, 2.5rem);
+      border-bottom: 1px solid var(--rule);
+    }
+    .brand {
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .bar p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: clamp(2.5rem, 9vh, 6rem) clamp(1.25rem, 6vw, 4rem);
+    }
+    .sheet { width: min(46rem, 100%); }
+    .folio {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      margin: 0 0 1.4rem;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .folio::before {
+      content: "";
+      width: 2.6rem;
+      height: 1px;
+      background: var(--rule);
+    }
+    h1 {
+      margin: 0;
+      max-width: 18ch;
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+    }
+    h1 em { font-style: italic; color: var(--clay); }
+    .lede {
+      max-width: 34rem;
+      margin: 1.4rem 0 0;
+      color: var(--ink-2);
+      font-size: 1.1rem;
+    }
+    .routes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem 1.6rem;
+      margin-top: 2.2rem;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+    }
+    .routes a { font-weight: 600; }
+
+    footer {
+      padding: 1.1rem clamp(1.25rem, 4vw, 2.5rem);
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.72rem;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-  <header class="masthead">
-    <div class="wrap masthead-inner">
-      <a class="wordmark" href="/APPY/">APPY</a>
-      <p class="masthead-meta">A diary, kept well</p>
-    </div>
+  <header class="bar">
+    <a class="brand" href="/APPY/">APPY</a>
+    <p>A diary, kept well</p>
   </header>
 
   <main id="main">
-    <section class="hero">
-      <div class="wrap">
-        <p class="label">Page 404</p>
-        <h1>This page<br />was never written.</h1>
-        <p class="lede">
-          The address you followed doesn't lead anywhere in APPY. It may have
-          been moved, or the link may be incomplete.
-        </p>
-        <p class="hero-actions">
-          <a class="text-link" href="/APPY/">Back to the first page <span aria-hidden="true">→</span></a>
-        </p>
-      </div>
-    </section>
+    <div class="sheet">
+      <p class="folio">Page 404</p>
+      <h1>This page was <em>never written.</em></h1>
+      <p class="lede">
+        The address you followed does not lead anywhere in APPY. It may have moved
+        when the diary was rebuilt, or the link may simply be incomplete.
+      </p>
+      <nav class="routes" aria-label="Ways back">
+        <a href="/APPY/">Open the diary &rarr;</a>
+        <a href="/APPY/#/library">Go to the library</a>
+        <a href="/APPY/#/search">Search your entries</a>
+      </nav>
+    </div>
   </main>
 
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <p class="footer-mark">APPY</p>
-      <p class="footer-note">Written on your device, read at your pace.</p>
-    </div>
-  </footer>
+  <footer>Everything you write stays in your browser.</footer>
 </body>
 </html>
