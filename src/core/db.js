@@ -181,7 +181,7 @@ function transact(storeNames, mode, work, attempt = 0) {
             settle(
               reject,
               new StorageError(
-                "The diary stopped responding. Close any other APPY tabs, then try again.",
+                "The diary stopped responding. Close other APPY tabs or reload the page, then try again.",
                 "timeout"
               )
             );
