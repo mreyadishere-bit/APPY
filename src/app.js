@@ -1,35 +1,27 @@
-/* ============================================
-   APPY — app behaviour
-   ============================================ */
+/* ============================================================
+   APPY — behaviour
+   Theme persistence, the page turn, and small courtesies.
+   No dependencies.
+   ============================================================ */
 
 (function () {
   "use strict";
 
   var STORAGE_KEY = "appy-theme";
   var root = document.documentElement;
+  var reduceMotion = window.matchMedia
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : { matches: false };
 
   /* ---------- theme ---------- */
 
   function systemPrefersDark() {
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return window.matchMedia
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      : false;
   }
 
-  function applyTheme(theme) {
-    if (theme === "light" || theme === "dark") {
-      root.setAttribute("data-theme", theme);
-    } else {
-      root.removeAttribute("data-theme");
-    }
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute(
-        "content",
-        theme === "light" ? "#fbfbfd" : theme === "dark" ? "#0b0c14" : systemPrefersDark() ? "#0b0c14" : "#fbfbfd"
-      );
-    }
-  }
-
-  function storedTheme() {
+  function readStoredTheme() {
     try {
       return localStorage.getItem(STORAGE_KEY);
     } catch (e) {
@@ -37,26 +29,84 @@
     }
   }
 
-  /* Apply the saved theme as early as possible to avoid a flash. */
-  applyTheme(storedTheme());
+  function effectiveTheme() {
+    var stored = root.getAttribute("data-theme");
+    if (stored === "light" || stored === "dark") return stored;
+    return systemPrefersDark() ? "dark" : "light";
+  }
+
+  function paintTheme(theme) {
+    if (theme === "light" || theme === "dark") {
+      root.setAttribute("data-theme", theme);
+    } else {
+      root.removeAttribute("data-theme");
+    }
+
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute("content", effectiveTheme() === "dark" ? "#14120e" : "#f7f4ee");
+    }
+
+    var toggle = document.getElementById("themeToggle");
+    if (toggle) {
+      var label = toggle.querySelector(".toggle-label");
+      var current = effectiveTheme();
+      toggle.setAttribute("data-theme-mode", current);
+      if (label) label.textContent = current === "dark" ? "Dark" : "Light";
+      toggle.setAttribute(
+        "aria-label",
+        current === "dark" ? "Switch to light theme" : "Switch to dark theme"
+      );
+    }
+  }
+
+  /* Paint before first meaningfully visible frame to avoid a flash. */
+  paintTheme(readStoredTheme());
 
   var toggle = document.getElementById("themeToggle");
   if (toggle) {
     toggle.addEventListener("click", function () {
-      var current = root.getAttribute("data-theme");
-      var next;
-      if (current === "dark") {
-        next = "light";
-      } else if (current === "light") {
-        next = "dark";
-      } else {
-        next = systemPrefersDark() ? "light" : "dark";
-      }
-      applyTheme(next);
+      var next = effectiveTheme() === "dark" ? "light" : "dark";
+      paintTheme(next);
       try {
         localStorage.setItem(STORAGE_KEY, next);
       } catch (e) {
-        /* storage unavailable — theme still applies for this session */
+        /* storage blocked — the choice still holds for this session */
+      }
+    });
+  }
+
+  /* Follow the system only while the reader has not chosen for themselves. */
+  if (window.matchMedia) {
+    var query = window.matchMedia("(prefers-color-scheme: dark)");
+    var onSystemChange = function () {
+      if (!readStoredTheme()) paintTheme(null);
+    };
+    if (query.addEventListener) {
+      query.addEventListener("change", onSystemChange);
+    } else if (query.addListener) {
+      query.addListener(onSystemChange);
+    }
+  }
+
+  /* ---------- the page turn ---------- */
+
+  var book = document.getElementById("book");
+  var pageTurn = document.getElementById("pageTurn");
+
+  if (book && pageTurn) {
+    var turn = function () {
+      var turned = book.classList.toggle("is-turned");
+      pageTurn.setAttribute("aria-label", turned ? "Turn back the page" : "Turn the page");
+    };
+
+    pageTurn.addEventListener("click", turn);
+
+    /* Space or Enter on the focused turn target is handled natively by
+       the button; this only adds Escape to undo. */
+    pageTurn.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && book.classList.contains("is-turned")) {
+        turn();
       }
     });
   }
@@ -68,12 +118,25 @@
     year.textContent = String(new Date().getFullYear());
   }
 
-  /* ---------- deploy status ---------- */
+  /* ---------- quiet reveal ---------- */
 
-  /* GitHub Pages exposes the deployed commit SHA through the build info
-     endpoint on the `github.io` host. Falls back silently. */
-  var status = document.getElementById("deployStatus");
-  if (status) {
-    status.textContent = "automatic";
+  if (!reduceMotion.matches && "IntersectionObserver" in window) {
+    var targets = document.querySelectorAll(".section, .pull");
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.15 }
+    );
+
+    targets.forEach(function (el) {
+      el.classList.add("will-reveal");
+      observer.observe(el);
+    });
   }
 })();
