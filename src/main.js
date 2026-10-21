@@ -12,6 +12,7 @@ import { mountShell, updateShell } from "./ui/shell.js";
 import { seedWelcome } from "./core/seed.js";
 import { entryMenu } from "./views/actions.js";
 import { homeView } from "./views/home.js";
+import { landingView } from "./views/landing.js";
 import { dayView, folderView, libraryView } from "./views/library.js";
 import { bookView } from "./views/book.js";
 import { editorView } from "./views/editor.js";
@@ -22,7 +23,8 @@ import { settingsView } from "./views/settings.js";
 import { missingView } from "./views/missing.js";
 
 const routes = {
-  home: () => homeView(),
+  home: () => landingView(),
+  today: () => homeView(),
   library: () => libraryView(),
   book: (route) => bookView(route.params[0]),
   folder: (route) => folderView(route.params[0]),
@@ -60,7 +62,9 @@ document.addEventListener("click", (event) => {
   const skip = event.target.closest(".skip-link");
   if (skip) {
     event.preventDefault();
-    viewElement.focus();
+    const target = viewElement.querySelector("[data-skip-target]") || viewElement;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "start" });
     return;
   }
 

@@ -6,7 +6,7 @@
    ============================================================ */
 
 import { clamp, esc, focusSoft, h, prefersReducedMotion } from "../ui/dom.js";
-import { icon } from "../ui/kit.js";
+import { icon, toast } from "../ui/kit.js";
 import { groupByMonth } from "../ui/entry-list.js";
 import { navigate } from "../ui/router.js";
 import * as store from "../core/store.js";
@@ -447,9 +447,11 @@ export function readerView(route) {
         await document.exitFullscreen();
       } else if (root.requestFullscreen) {
         await root.requestFullscreen();
+      } else {
+        toast("This browser has no full-screen mode. The pages still read well.");
       }
     } catch {
-      /* the browser declined; the room still reads */
+      toast("The browser would not open full screen. The pages still read well.");
     }
   }
 

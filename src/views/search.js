@@ -74,7 +74,6 @@ export function searchView(route) {
         <span class="label">Sort</span>
         <select class="select" data-field="sort">
           <option value="">${state.q ? "Best match" : "Newest first"}</option>
-          <option value="newest" ${state.sort === "newest" ? "selected" : ""}>Newest first</option>
           <option value="oldest" ${state.sort === "oldest" ? "selected" : ""}>Oldest first</option>
           <option value="updated" ${state.sort === "updated" ? "selected" : ""}>Recently edited</option>
         </select>
@@ -198,8 +197,7 @@ export function searchView(route) {
 
     const filtered = Boolean(state.book || state.folder || state.from || state.to);
 
-    const defaultOption = sortSelect?.querySelector('option[value=""]');
-    if (defaultOption) defaultOption.textContent = query ? "Best match" : "Newest first";
+    syncSortOptions(query);
 
     count.textContent = query
       ? `${rows.length} ${rows.length === 1 ? "result" : "results"} for “${query}”`
@@ -261,5 +259,28 @@ export function searchView(route) {
           .join("")}
       </ol>
     `;
+  }
+
+  /**
+   * "Newest first" is only a real choice once a query exists; without one it
+   * is the default and the first option already says so. Keeping one option
+   * per label avoids the confusing duplicate the select used to show.
+   */
+  function syncSortOptions(query) {
+    if (!sortSelect) return;
+    const first = sortSelect.options[0];
+    if (first) first.textContent = query ? "Best match" : "Newest first";
+
+    let newest = sortSelect.querySelector('option[value="newest"]');
+    if (query && !newest) {
+      newest = document.createElement("option");
+      newest.value = "newest";
+      newest.textContent = "Newest first";
+      sortSelect.insertBefore(newest, sortSelect.options[1] || null);
+      if (state.sort === "newest") newest.selected = true;
+    } else if (!query && newest) {
+      if (sortSelect.value === "newest") sortSelect.value = "";
+      newest.remove();
+    }
   }
 }

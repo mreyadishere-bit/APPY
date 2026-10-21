@@ -175,7 +175,14 @@ export function settingsView() {
   `;
 
   root.addEventListener("click", onClick);
+  root.addEventListener("input", onInput);
   root.addEventListener("change", onChange);
+
+  const unsubscribe = store.subscribe((reason) => {
+    if (reason === "settings") paintThemeChoices();
+  });
+
+  let nameTimer = 0;
 
   refreshStorage();
 
@@ -183,21 +190,38 @@ export function settingsView() {
     root,
     title: "Settings",
     destroy() {
+      window.clearTimeout(nameTimer);
+      unsubscribe();
       root.removeEventListener("click", onClick);
+      root.removeEventListener("input", onInput);
       root.removeEventListener("change", onChange);
     },
   };
 
   /* ---------- events ---------- */
 
+  function paintThemeChoices() {
+    const theme = store.settings().theme;
+    root.querySelectorAll("[data-theme-choice]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+    });
+  }
+
+  function onInput(event) {
+    const field = event.target.closest('[data-field="name"]');
+    if (!field) return;
+    const value = field.value.trim();
+    window.clearTimeout(nameTimer);
+    nameTimer = window.setTimeout(() => {
+      store.updateSettings({ name: value }, { silent: true });
+    }, 350);
+  }
+
   function onClick(event) {
     const themeButton = event.target.closest("[data-theme-choice]");
     if (themeButton) {
-      const theme = themeButton.dataset.themeChoice;
-      store.updateSettings({ theme });
-      root.querySelectorAll("[data-theme-choice]").forEach((button) => {
-        button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
-      });
+      store.updateSettings({ theme: themeButton.dataset.themeChoice });
+      paintThemeChoices();
       return;
     }
 

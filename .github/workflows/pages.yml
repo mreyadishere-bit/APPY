@@ -61,7 +61,7 @@ jobs:
             test -f "_site/$file" || { echo "Missing _site/$file"; exit 1; }
           done
 
-          for css in tokens base app reader; do
+          for css in tokens base app reader landing; do
             test -f "_site/styles/$css.css" || { echo "Missing _site/styles/$css.css"; exit 1; }
             grep -q "styles/$css.css?v=${VERSION}" _site/index.html || {
               echo "styles/$css.css is not cache-busted in index.html"; exit 1;

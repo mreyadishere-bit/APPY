@@ -6,6 +6,7 @@
 
 const DEFAULT_TITLES = {
   home: "APPY",
+  today: "Today",
   library: "Library",
   book: "Book",
   folder: "Folder",

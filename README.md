@@ -23,6 +23,12 @@ organises posts:
   turn, a table of contents, and a plain list for anyone who would rather
   scroll.
 
+The **front door** at `#/` is the editorial landing page: a masthead, an open
+book that shows the newest entries and turns through them, three numbered notes
+on how the diary works, and a pull quote. Its buttons lead into the app; the
+rail is hidden there so the page can own the whole window. The dashboard lives
+at `#/today`.
+
 ## Routes
 
 The app is one page; routes live in the hash so GitHub Pages needs no rewrite
@@ -30,7 +36,8 @@ rules.
 
 | Route | What it is |
 | --- | --- |
-| `#/` | Home — greeting, continue reading, shelf, recent entries, calendar |
+| `#/` | The front door — masthead, hero, three notes, a quote |
+| `#/today` | Today — greeting, continue writing, shelf, recent entries, calendar |
 | `#/library` | Every book and folder, with all entries |
 | `#/book/:id` | One book: cover, facts, entry list |
 | `#/folder/:id` | Entries filed in one folder |
@@ -136,13 +143,14 @@ sans-serif capitals for labels. Hairline rules instead of cards.
 ## Files
 
 ```
-index.html                    the app shell (theme boot, four stylesheets, module entry)
+index.html                    the app shell (theme boot, five stylesheets, module entry)
 404.html                      styled not-found page
 write.html, read.html         redirect stubs for old links
 styles/tokens.css             colours, type, spacing, motion
 styles/base.css               reset, typography, buttons, fields, chips, dialogs, toasts
 styles/app.css                rail, home, library, editor, search, settings
 styles/reader.css             the reading room: covers, spreads, leaves, contents
+styles/landing.css            the front door: masthead, hero, notes, quote, footer
 
 src/main.js                   boot, routes, global handlers, fatal screen
 src/core/db.js                IndexedDB, transactions, StorageError
@@ -159,7 +167,8 @@ src/ui/router.js              hash parsing, one mounted view, teardown
 src/ui/shell.js               rail, mobile bar, theme, counts
 src/ui/entry-list.js          the shared entry list
 
-src/views/home.js             greeting, shelf, recent entries, calendar
+src/views/home.js             Today: greeting, shelf, recent entries, calendar
+src/views/landing.js          the front door: masthead, live hero book, notes
 src/views/library.js          books, folders, everything
 src/views/book.js             one book
 src/views/editor.js           writing, autosave, formatting, move, trash
