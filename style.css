@@ -163,23 +163,24 @@ a { color: inherit; }
   align-items: center;
   gap: 0.5rem;
   margin-left: auto;
-  padding: 0.35rem 0.7rem 0.35rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
+  padding: 0.2rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
   background: transparent;
   color: var(--muted);
   font-family: var(--sans);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.theme-toggle:hover {
-  border-color: var(--clay);
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
   color: var(--clay);
+  border-bottom-color: var(--clay);
 }
 
 .toggle-dot {
@@ -528,18 +529,6 @@ a { color: inherit; }
 }
 
 /* ---------- motion ---------- */
-
-/* Applied by JS only, so content is never hidden when scripts fail. */
-.will-reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-}
-
-.will-reveal.is-visible {
-  opacity: 1;
-  transform: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

@@ -9,9 +9,6 @@
 
   var STORAGE_KEY = "appy-theme";
   var root = document.documentElement;
-  var reduceMotion = window.matchMedia
-    ? window.matchMedia("(prefers-reduced-motion: reduce)")
-    : { matches: false };
 
   /* ---------- theme ---------- */
 
@@ -116,27 +113,5 @@
   var year = document.getElementById("year");
   if (year) {
     year.textContent = String(new Date().getFullYear());
-  }
-
-  /* ---------- quiet reveal ---------- */
-
-  if (!reduceMotion.matches && "IntersectionObserver" in window) {
-    var targets = document.querySelectorAll(".section, .pull");
-    var observer = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.15 }
-    );
-
-    targets.forEach(function (el) {
-      el.classList.add("will-reveal");
-      observer.observe(el);
-    });
   }
 })();
