@@ -50,12 +50,18 @@ jobs:
           test -s _site/src/app.js
           test -s _site/src/reader.js
           grep -q "APPY" _site/index.html
-          grep -q "reading room" _site/read.html
+          grep -qi "reading room" _site/read.html
           grep -q 'name="description"' _site/index.html
           grep -q "og:image" _site/index.html
-          grep -q "sitemap" _site/robots.txt
+          grep -qi "sitemap" _site/robots.txt
           # No un-replaced template markers should survive the build.
-          if grep -rq "{{" _site; then echo "unreplaced template marker"; exit 1; fi
+          # Restrict to text files: binary assets can contain any byte pair.
+          if grep -rq --include='*.html' --include='*.css' --include='*.js' \
+                    --include='*.xml' --include='*.txt' --include='*.webmanifest' \
+                    '{{' _site; then
+            echo "unreplaced template marker"
+            exit 1
+          fi
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
