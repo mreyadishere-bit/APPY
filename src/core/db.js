@@ -38,6 +38,23 @@ function wrapError(error) {
 
 let dbPromise = null;
 
+/* A tiny write should take milliseconds. If a transaction sits this long
+   without completing, it is wedged (often by another tab holding the
+   database). Abort it and try once more instead of leaving the interface
+   on "Working…" forever. */
+const DB_TIMEOUT = 4000;
+
+function forgetDatabase(db = null) {
+  dbPromise = null;
+  if (db) {
+    try {
+      db.close();
+    } catch {
+      /* already closed */
+    }
+  }
+}
+
 function openDatabase() {
   if (dbPromise) return dbPromise;
 
@@ -97,11 +114,19 @@ function openDatabase() {
 
     request.onsuccess = () => {
       const db = request.result;
-      db.onversionchange = () => db.close();
+      // If another tab asks for a newer schema, close this connection and
+      // make the next operation open a fresh one.
+      db.onversionchange = () => forgetDatabase(db);
+      db.onclose = () => {
+        if (dbPromise) dbPromise = null;
+      };
       resolve(db);
     };
 
-    request.onerror = () => reject(wrapError(request.error));
+    request.onerror = () => {
+      dbPromise = null;
+      reject(wrapError(request.error));
+    };
     request.onblocked = () =>
       reject(
         new StorageError(
@@ -114,45 +139,82 @@ function openDatabase() {
   return dbPromise;
 }
 
-function transact(storeNames, mode, work) {
+function transact(storeNames, mode, work, attempt = 0) {
   const names = Array.isArray(storeNames) ? storeNames : [storeNames];
 
-  return openDatabase().then(
-    (db) =>
-      new Promise((resolve, reject) => {
-        let tx;
-        try {
-          tx = db.transaction(names, mode);
-        } catch (error) {
-          reject(wrapError(error));
-          return;
-        }
-
-        const stores = {};
-        names.forEach((name) => {
-          stores[name] = tx.objectStore(name);
-        });
-
-        let request = null;
-        try {
-          request = work(stores, tx);
-        } catch (error) {
+  return openDatabase()
+    .then(
+      (db) =>
+        new Promise((resolve, reject) => {
+          let tx;
           try {
-            tx.abort();
-          } catch {
-            /* already gone */
+            tx = db.transaction(names, mode);
+          } catch (error) {
+            if (error?.name === "InvalidStateError") forgetDatabase(db);
+            reject(wrapError(error));
+            return;
           }
-          reject(wrapError(error));
-          return;
-        }
 
-        tx.oncomplete = () => {
-          resolve(request && "result" in request ? request.result : undefined);
-        };
-        tx.onerror = () => reject(wrapError(tx.error));
-        tx.onabort = () => reject(wrapError(tx.error));
-      })
-  );
+          const stores = {};
+          names.forEach((name) => {
+            stores[name] = tx.objectStore(name);
+          });
+
+          let request = null;
+          let settled = false;
+          let timer = 0;
+
+          const settle = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            if (timer) clearTimeout(timer);
+            callback(value);
+          };
+
+          timer = setTimeout(() => {
+            console.warn("APPY: diary transaction timed out", { stores: names, mode, attempt });
+            try {
+              tx.abort();
+            } catch {
+              /* already finished */
+            }
+            settle(
+              reject,
+              new StorageError(
+                "The diary stopped responding. Close any other APPY tabs, then try again.",
+                "timeout"
+              )
+            );
+          }, DB_TIMEOUT);
+
+          // Attach these before issuing the request: the transaction can
+          // never complete without these handlers being in place.
+          tx.oncomplete = () =>
+            settle(resolve, request && "result" in request ? request.result : undefined);
+          tx.onerror = () => settle(reject, wrapError(tx.error));
+          tx.onabort = () => settle(reject, wrapError(tx.error));
+
+          try {
+            request = work(stores, tx);
+          } catch (error) {
+            try {
+              tx.abort();
+            } catch {
+              /* already gone */
+            }
+            settle(reject, wrapError(error));
+          }
+        })
+    )
+    .catch((error) => {
+      // A stalled transaction was aborted; try once more on the same
+      // connection. The work is replayed with the same values and keys,
+      // so a late commit cannot produce a duplicate.
+      if (attempt === 0 && error?.code === "timeout") {
+        return transact(storeNames, mode, work, 1);
+      }
+      throw error;
+    });
 }
 
 export const db = {
