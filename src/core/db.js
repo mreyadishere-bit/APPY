@@ -40,11 +40,11 @@ let dbPromise = null;
 
 /* A tiny write should take milliseconds. If a write transaction sits this
    long without completing, it is wedged (often by another tab holding the
-   database). Abort it and try once more instead of leaving the interface
-   on "Working…" forever. Reads get a much longer leash because a large
-   diary can legitimately take a while to load. */
-const WRITE_TIMEOUT = 4000;
-const READ_TIMEOUT = 20000;
+   database). Abort it, reopen the connection, and try once more instead
+   of leaving the interface on "Working…" forever. Reads get a longer leash
+   because a large diary can legitimately take a while to load. */
+const WRITE_TIMEOUT = 3000;
+const READ_TIMEOUT = 8000;
 
 /* Bulk operations (import, emptying a big trash) legitimately need longer;
    give them a few milliseconds per row, capped so a true stall still ends. */
@@ -150,6 +150,7 @@ function openDatabase() {
 function transact(storeNames, mode, work, options = {}) {
   const names = Array.isArray(storeNames) ? storeNames : [storeNames];
   const attempt = options.attempt || 0;
+  const canRetry = options.retry !== false;
   const limit = options.timeout || (mode === "readwrite" ? WRITE_TIMEOUT : READ_TIMEOUT);
 
   return openDatabase()
@@ -188,6 +189,9 @@ function transact(storeNames, mode, work, options = {}) {
             } catch {
               /* already finished */
             }
+            // A connection can outlive the transaction that wedged it.
+            // Drop it so a retry starts clean.
+            forgetDatabase(db);
             settle(
               reject,
               new StorageError(
@@ -217,11 +221,13 @@ function transact(storeNames, mode, work, options = {}) {
         })
     )
     .catch((error) => {
-      // A stalled transaction was aborted; try once more on the same
-      // connection. The work is replayed with the same values and keys,
-      // so a late commit cannot produce a duplicate.
-      if (attempt === 0 && error?.code === "timeout") {
-        return transact(storeNames, mode, work, { attempt: 1, timeout: limit });
+      // A stalled transaction was aborted and its connection dropped.
+      // Retry once on a fresh connection. The work is replayed with the
+      // same values and keys, so a late commit cannot produce a duplicate.
+      if (canRetry && attempt === 0 && error?.code === "timeout") {
+        return new Promise((resolve) => setTimeout(resolve, 120)).then(() =>
+          transact(storeNames, mode, work, { attempt: 1, timeout: limit, retry: false })
+        );
       }
       throw error;
     });
@@ -231,13 +237,21 @@ export const db = {
   open: openDatabase,
 
   getAll(store) {
-    return transact(store, "readonly", (stores) => stores[store].getAll()).then(
-      (rows) => rows || []
-    );
+    return transact(
+      store,
+      "readonly",
+      (stores) => stores[store].getAll(),
+      { retry: false }
+    ).then((rows) => rows || []);
   },
 
   get(store, key) {
-    return transact(store, "readonly", (stores) => stores[store].get(key));
+    return transact(
+      store,
+      "readonly",
+      (stores) => stores[store].get(key),
+      { retry: false }
+    );
   },
 
   put(store, value) {

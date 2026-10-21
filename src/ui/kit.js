@@ -179,6 +179,29 @@ export function modal({
       const idleLabel = submit.textContent;
       submit.disabled = true;
       submit.textContent = "Working…";
+
+      const escapeHatch = () => {
+        errorLine.textContent =
+          "This is taking too long. Close other APPY tabs, then reload the page.";
+        errorLine.hidden = false;
+        submit.disabled = false;
+        submit.textContent = idleLabel;
+        if (!actions.querySelector("[data-reload]")) {
+          const reload = h("button", {
+            class: "btn btn--ghost",
+            type: "button",
+            text: "Reload",
+          });
+          reload.setAttribute("data-reload", "");
+          reload.addEventListener("click", () => location.reload());
+          actions.insertBefore(reload, cancel);
+        }
+      };
+
+      const guard = setTimeout(() => {
+        if (!settled) escapeHatch();
+      }, 10000);
+
       try {
         const value = await onSubmit(form);
         finish(value === undefined ? true : value);
@@ -187,6 +210,12 @@ export function modal({
         errorLine.hidden = false;
         submit.disabled = false;
         submit.textContent = idleLabel;
+        if (error?.code === "timeout" || error?.code === "blocked") {
+          escapeHatch();
+          errorLine.textContent = error?.message || errorLine.textContent;
+        }
+      } finally {
+        clearTimeout(guard);
       }
     });
 

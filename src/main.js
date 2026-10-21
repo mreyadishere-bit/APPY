@@ -56,6 +56,26 @@ const router = createRouter({
 
 viewElement.innerHTML = `<p class="dim" style="padding:1rem 0">Opening your diary…</p>`;
 
+// Opening normally takes a few hundred milliseconds. If it does not, say
+// why instead of leaving a silent line on the page.
+const slowOpen = setTimeout(() => {
+  if (!viewElement.textContent.includes("Opening your diary")) return;
+  viewElement.innerHTML = `
+    <div style="max-width:34rem;padding:clamp(2rem,6vw,4rem) 0">
+      <p class="label is-accent">Storage</p>
+      <h1 class="display" style="margin:0.5rem 0 0.8rem">Still opening the diary…</h1>
+      <p class="dim">
+        Another APPY tab may be holding the diary open. Close any other APPY tabs,
+        then reload this page.
+      </p>
+      <div class="empty-actions">
+        <button class="btn btn--primary" type="button" data-reload>Reload</button>
+      </div>
+    </div>
+  `;
+  viewElement.querySelector("[data-reload]")?.addEventListener("click", () => location.reload());
+}, 2500);
+
 document.addEventListener("click", (event) => {
   // The hash belongs to the router, so the skip link cannot be a real
   // fragment. Focus the view directly instead of navigating to #view.
@@ -92,9 +112,16 @@ boot();
 async function boot() {
   try {
     await store.init();
-    await seedWelcome();
+    clearTimeout(slowOpen);
     router.render();
+
+    // The guide book is a convenience, not a gate. Draw the diary first,
+    // then write it; a slow disk or a busy tab must not hold up the app.
+    seedWelcome().catch((error) => {
+      console.error("APPY could not write the welcome book", error);
+    });
   } catch (error) {
+    clearTimeout(slowOpen);
     fatal(error);
   }
 }
