@@ -38,11 +38,13 @@ function wrapError(error) {
 
 let dbPromise = null;
 
-/* A tiny write should take milliseconds. If a transaction sits this long
-   without completing, it is wedged (often by another tab holding the
+/* A tiny write should take milliseconds. If a write transaction sits this
+   long without completing, it is wedged (often by another tab holding the
    database). Abort it and try once more instead of leaving the interface
-   on "Working…" forever. */
-const DB_TIMEOUT = 4000;
+   on "Working…" forever. Reads get a much longer leash because a large
+   diary can legitimately take a while to load. */
+const WRITE_TIMEOUT = 4000;
+const READ_TIMEOUT = 20000;
 
 function forgetDatabase(db = null) {
   dbPromise = null;
@@ -185,7 +187,7 @@ function transact(storeNames, mode, work, attempt = 0) {
                 "timeout"
               )
             );
-          }, DB_TIMEOUT);
+          }, mode === "readwrite" ? WRITE_TIMEOUT : READ_TIMEOUT);
 
           // Attach these before issuing the request: the transaction can
           // never complete without these handlers being in place.
