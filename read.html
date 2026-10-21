@@ -28,8 +28,8 @@
       <p class="masthead-meta">A diary, kept well</p>
       <nav class="masthead-nav" aria-label="Main">
         <a href="/APPY/">Home</a>
-        <a href="read.html" aria-current="page">Reading room</a>
-        <a href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">Source <span aria-hidden="true">↗</span></a>
+        <a href="write.html">Write</a>
+        <a href="read.html" aria-current="page">Read</a>
       </nav>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
         <span class="toggle-dot" aria-hidden="true"></span>
@@ -43,12 +43,23 @@
     <section class="room" id="shelf">
       <div class="wrap">
         <p class="label">The reading room</p>
-        <h1 class="room-title">Three books<br />left open.</h1>
+        <h1 class="room-title">Books left<br />open.</h1>
         <p class="lede room-intro">
-          These are sample books, kept the way APPY keeps yours. Choose one
-          and read it a page at a time.
+          Choose a book and read it a page at a time. Your own books appear
+          first, kept exactly as you wrote them.
         </p>
 
+        <div id="userShelfBlock" hidden>
+          <h2 class="shelf-heading">Your books</h2>
+          <ul class="shelf" id="userShelf"></ul>
+        </div>
+
+        <p class="shelf-empty" id="userShelfEmpty">
+          Nothing written yet.
+          <a class="text-link" href="write.html">Start a diary <span aria-hidden="true">→</span></a>
+        </p>
+
+        <h2 class="shelf-heading">Samples</h2>
         <ul class="shelf">
           <li>
             <a class="volume" href="#book-ordinary" data-open-book="book-ordinary">
@@ -214,11 +225,12 @@
     <div class="wrap footer-inner">
       <p class="footer-mark">APPY</p>
       <p class="footer-note">Sample books. Your own stay on your device.</p>
-      <p class="footer-copy">© <span id="year">2026</span></p>
+      <p class="footer-copy">© <span id="year">2026</span> · <a class="footer-link" href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">Source</a></p>
     </div>
   </footer>
 
   <script src="src/app.js"></script>
+  <script src="src/store.js"></script>
   <script src="src/reader.js"></script>
 </body>
 </html>

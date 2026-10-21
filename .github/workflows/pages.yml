@@ -26,34 +26,52 @@ jobs:
           set -euo pipefail
           node --check src/app.js
           node --check src/reader.js
+          node --check src/store.js
+          node --check src/writing.js
 
       - name: Prepare static site
         run: |
           set -euo pipefail
           mkdir -p _site/src
-          cp index.html 404.html read.html style.css og.png robots.txt sitemap.xml _site/
-          cp src/app.js src/reader.js _site/src/
+          cp index.html 404.html read.html write.html style.css og.png robots.txt sitemap.xml _site/
+          cp src/app.js src/reader.js src/store.js src/writing.js _site/src/
           touch _site/.nojekyll
           # Cache-bust assets with the commit SHA so browsers always get fresh files.
-          for page in _site/index.html _site/read.html; do
+          for page in _site/index.html _site/read.html _site/write.html; do
             sed -i "s|src/app\.js|src/app.js?v=${GITHUB_SHA::12}|g; \
                     s|src/reader\.js|src/reader.js?v=${GITHUB_SHA::12}|g; \
+                    s|src/store\.js|src/store.js?v=${GITHUB_SHA::12}|g; \
+                    s|src/writing\.js|src/writing.js?v=${GITHUB_SHA::12}|g; \
                     s|href=\"style\.css\"|href=\"style.css?v=${GITHUB_SHA::12}\"|g" "$page"
           done
 
       - name: Assert build output
         run: |
           set -euo pipefail
-          for f in index.html 404.html read.html style.css og.png robots.txt sitemap.xml; do
+          for f in index.html 404.html read.html write.html style.css og.png robots.txt sitemap.xml; do
             test -s "_site/$f" || { echo "missing _site/$f"; exit 1; }
           done
-          test -s _site/src/app.js
-          test -s _site/src/reader.js
+          for f in app.js reader.js store.js writing.js; do
+            test -s "_site/src/$f" || { echo "missing _site/src/$f"; exit 1; }
+          done
           grep -q "APPY" _site/index.html
           grep -qi "reading room" _site/read.html
+          grep -qi "writing room" _site/write.html
+          # Every page must ship its scripts already cache-busted.
+          grep -q "src/app.js?v=" _site/index.html
+          grep -q "src/reader.js?v=" _site/read.html
+          grep -q "src/writing.js?v=" _site/write.html
           grep -q 'name="description"' _site/index.html
           grep -q "og:image" _site/index.html
           grep -qi "sitemap" _site/robots.txt
+          # No un-replaced template markers should survive the build.
+          # Restrict to text files: binary assets can contain any byte pair.
+          if grep -rq --include='*.html' --include='*.css' --include='*.js' \
+                    --include='*.xml' --include='*.txt' --include='*.webmanifest' \
+                    '{{' _site; then
+            echo "unreplaced template marker"
+            exit 1
+          fi
           # No un-replaced template markers should survive the build.
           # Restrict to text files: binary assets can contain any byte pair.
           if grep -rq --include='*.html' --include='*.css' --include='*.js' \

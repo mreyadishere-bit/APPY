@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The writing room — APPY</title>
+  <meta name="description" content="Write into folders and books. Everything is saved on your own device." />
+  <meta name="theme-color" content="#f7f4ee" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%23f7f4ee'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' text-anchor='middle' fill='%239a4a2f'%3EA%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="skip" href="#pane">Skip to the page</a>
+
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a class="wordmark" href="/APPY/">APPY</a>
+      <p class="masthead-meta">A diary, kept well</p>
+      <nav class="masthead-nav" aria-label="Main">
+        <a href="/APPY/">Home</a>
+        <a href="write.html" aria-current="page">Write</a>
+        <a href="read.html">Read</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
+        <span class="toggle-dot" aria-hidden="true"></span>
+        <span class="toggle-label">Light</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap writer">
+      <!-- ---------- library ---------- -->
+      <aside class="library" aria-label="Your library">
+        <div class="library-head">
+          <p class="label">Your library</p>
+          <button class="mini-btn" id="newFolderBtn" type="button">New folder</button>
+        </div>
+
+        <div id="libraryTree" class="library-tree">
+          <p class="library-empty">Loading…</p>
+        </div>
+
+        <div class="library-foot">
+          <p class="library-summary" id="librarySummary"></p>
+          <div class="library-actions">
+            <button class="link-btn" id="exportBtn" type="button">Export</button>
+            <button class="link-btn" id="importBtn" type="button">Import</button>
+            <input type="file" id="importFile" accept="application/json,.json" hidden />
+          </div>
+          <p class="library-note">Kept on this device.</p>
+        </div>
+      </aside>
+
+      <!-- ---------- pane ---------- -->
+      <section class="pane" id="pane">
+        <!-- empty -->
+        <div class="pane-view" id="emptyView">
+          <p class="label">Nothing open</p>
+          <h1 class="pane-title">Begin with a folder.</h1>
+          <p class="pane-lede">
+            Folders hold books. Books hold entries. Make a folder for the part
+            of your life you want to keep, then a book for the season of it.
+          </p>
+          <p><button class="btn-primary" id="emptyNewFolder" type="button">Make a folder</button></p>
+        </div>
+
+        <!-- book -->
+        <div class="pane-view" id="bookView" hidden>
+          <header class="pane-head">
+            <div>
+              <p class="label" id="bookFolder"></p>
+              <h1 class="pane-title" id="bookTitle"></h1>
+            </div>
+            <div class="pane-head-actions">
+              <button class="btn-primary" id="newEntryBtn" type="button">New entry</button>
+              <button class="link-btn" id="renameBookBtn" type="button">Rename</button>
+              <button class="link-btn danger" id="deleteBookBtn" type="button">Delete book</button>
+            </div>
+          </header>
+          <ol class="entry-list" id="entryList"></ol>
+          <p class="pane-empty" id="bookEmpty" hidden>
+            No entries yet. The first one is the hardest.
+          </p>
+        </div>
+
+        <!-- editor -->
+        <div class="pane-view" id="editorView" hidden>
+          <form id="entryForm" autocomplete="off">
+            <header class="pane-head">
+              <div>
+                <p class="label" id="editorFolder"></p>
+                <h1 class="pane-title" id="editorBook"></h1>
+              </div>
+              <div class="pane-head-actions">
+                <span class="save-status" id="saveStatus" role="status"></span>
+                <button class="link-btn" id="deleteEntryBtn" type="button">Delete</button>
+                <button class="link-btn" id="backToBookBtn" type="button">Done</button>
+              </div>
+            </header>
+
+            <label class="field">
+              <span class="field-label">Date</span>
+              <input class="date-input" id="entryDate" type="date" required />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Entry</span>
+              <textarea class="entry-editor" id="entryText" rows="12"
+                placeholder="What happened today?"></textarea>
+            </label>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ---------- dialogs ---------- -->
+  <dialog class="dialog" id="nameDialog">
+    <form method="dialog" id="nameForm">
+      <h2 class="dialog-title" id="nameTitle">New folder</h2>
+      <label class="field">
+        <span class="field-label" id="nameLabel">Folder name</span>
+        <input class="text-input" id="nameInput" type="text" maxlength="80" required />
+      </label>
+      <div class="dialog-actions">
+        <button class="link-btn" value="cancel" type="submit" formnovalidate>Cancel</button>
+        <button class="btn-primary" value="ok" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p class="footer-mark">APPY</p>
+      <p class="footer-note">Written on your device, read at your pace.</p>
+      <p class="footer-copy">© <span id="year">2026</span> · <a class="footer-link" href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">Source</a></p>
+    </div>
+  </footer>
+
+  <script src="src/app.js"></script>
+  <script src="src/store.js"></script>
+  <script src="src/writing.js"></script>
+</body>
+</html>
