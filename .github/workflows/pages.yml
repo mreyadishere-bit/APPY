@@ -22,25 +22,40 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate JavaScript syntax
-        run: node --check src/app.js
+        run: |
+          set -euo pipefail
+          node --check src/app.js
+          node --check src/reader.js
 
       - name: Prepare static site
         run: |
           set -euo pipefail
-          mkdir -p _site
-          cp -r index.html 404.html style.css src _site/
+          mkdir -p _site/src
+          cp index.html 404.html read.html style.css og.png robots.txt sitemap.xml _site/
+          cp src/app.js src/reader.js _site/src/
           touch _site/.nojekyll
           # Cache-bust assets with the commit SHA so browsers always get fresh files.
-          sed -i "s|src/app.js|src/app.js?v=${GITHUB_SHA::12}|g" _site/index.html
-          sed -i "s|style.css|style.css?v=${GITHUB_SHA::12}|g" _site/index.html
+          for page in _site/index.html _site/read.html; do
+            sed -i "s|src/app\.js|src/app.js?v=${GITHUB_SHA::12}|g; \
+                    s|src/reader\.js|src/reader.js?v=${GITHUB_SHA::12}|g; \
+                    s|href=\"style\.css\"|href=\"style.css?v=${GITHUB_SHA::12}\"|g" "$page"
+          done
 
       - name: Assert build output
         run: |
           set -euo pipefail
-          test -s _site/index.html
-          test -s _site/style.css
+          for f in index.html 404.html read.html style.css og.png robots.txt sitemap.xml; do
+            test -s "_site/$f" || { echo "missing _site/$f"; exit 1; }
+          done
           test -s _site/src/app.js
+          test -s _site/src/reader.js
           grep -q "APPY" _site/index.html
+          grep -q "reading room" _site/read.html
+          grep -q 'name="description"' _site/index.html
+          grep -q "og:image" _site/index.html
+          grep -q "sitemap" _site/robots.txt
+          # No un-replaced template markers should survive the build.
+          if grep -rq "{{" _site; then echo "unreplaced template marker"; exit 1; fi
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

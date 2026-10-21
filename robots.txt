@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mreyadishere-bit.github.io/APPY/sitemap.xml

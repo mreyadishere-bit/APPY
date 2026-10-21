@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The reading room — APPY</title>
+  <meta name="description" content="Sample books from APPY. Read a diary the way it was written: in folders, in books, a page at a time." />
+  <meta name="theme-color" content="#f7f4ee" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="The reading room — APPY" />
+  <meta property="og:description" content="Sample books from APPY. A diary kept in books, read a page at a time." />
+  <meta property="og:image" content="https://mreyadishere-bit.github.io/APPY/og.png" />
+  <meta property="og:url" content="https://mreyadishere-bit.github.io/APPY/read.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="canonical" href="https://mreyadishere-bit.github.io/APPY/read.html" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%23f7f4ee'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' text-anchor='middle' fill='%239a4a2f'%3EA%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a class="wordmark" href="/APPY/">APPY</a>
+      <p class="masthead-meta">A diary, kept well</p>
+      <nav class="masthead-nav" aria-label="Main">
+        <a href="/APPY/">Home</a>
+        <a href="read.html" aria-current="page">Reading room</a>
+        <a href="https://github.com/mreyadishere-bit/APPY" target="_blank" rel="noopener">Source <span aria-hidden="true">↗</span></a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between light and dark">
+        <span class="toggle-dot" aria-hidden="true"></span>
+        <span class="toggle-label">Light</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ shelf ============ -->
+    <section class="room" id="shelf">
+      <div class="wrap">
+        <p class="label">The reading room</p>
+        <h1 class="room-title">Three books<br />left open.</h1>
+        <p class="lede room-intro">
+          These are sample books, kept the way APPY keeps yours. Choose one
+          and read it a page at a time.
+        </p>
+
+        <ul class="shelf">
+          <li>
+            <a class="volume" href="#book-ordinary" data-open-book="book-ordinary">
+              <span class="volume-spine" aria-hidden="true"></span>
+              <span class="volume-body">
+                <span class="volume-title">The Ordinary Weeks</span>
+                <span class="volume-meta">2026 · six entries</span>
+                <span class="volume-blurb">Lamps, beans, and a blank page.</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="volume" href="#book-moving" data-open-book="book-moving">
+              <span class="volume-spine" aria-hidden="true"></span>
+              <span class="volume-body">
+                <span class="volume-title">Moving House</span>
+                <span class="volume-meta">June 2026 · four entries</span>
+                <span class="volume-blurb">Six boxes marked kitchen.</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="volume" href="#book-winter" data-open-book="book-winter">
+              <span class="volume-spine" aria-hidden="true"></span>
+              <span class="volume-body">
+                <span class="volume-title">Winter, Slowly</span>
+                <span class="volume-meta">December 2026 · four entries</span>
+                <span class="volume-blurb">Dark by four, soup again.</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ reader ============ -->
+    <section class="reader" id="reader" hidden aria-label="Book reader">
+      <div class="wrap">
+        <div class="reader-bar">
+          <button class="reader-close" id="readerClose" type="button">
+            <span aria-hidden="true">←</span> Back to the shelf
+          </button>
+          <p class="reader-title" id="readerTitle"></p>
+          <p class="reader-count" id="readerCount" aria-live="polite"></p>
+        </div>
+
+        <div class="spread" id="spread">
+          <div class="reader-page reader-page-left">
+            <div class="reader-content" data-slot="left"></div>
+            <span class="reader-folio" data-folio="left"></span>
+          </div>
+          <div class="reader-page reader-page-right">
+            <div class="reader-content" data-slot="right"></div>
+            <span class="reader-folio" data-folio="right"></span>
+          </div>
+          <div class="reader-spine" aria-hidden="true"></div>
+        </div>
+
+        <div class="reader-nav">
+          <button class="page-btn" id="prevPage" type="button">
+            <span aria-hidden="true">←</span> Previous
+          </button>
+          <span class="reader-progress" aria-hidden="true">
+            <span class="progress-bar"><span class="progress-fill" id="progressFill"></span></span>
+          </span>
+          <button class="page-btn" id="nextPage" type="button">
+            Next <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ source content ============ -->
+    <!-- Rendered into the reader when JavaScript is on. Visible, plain and
+         readable when it is off. -->
+    <div class="wrap books">
+      <section class="book" id="book-ordinary">
+        <header class="book-head">
+          <h2>The Ordinary Weeks</h2>
+          <p class="book-meta">2026 · six entries</p>
+        </header>
+        <div class="entries">
+          <article class="entry">
+            <p class="entry-date">3 February</p>
+            <p class="entry-text">Bought a second-hand lamp for the desk. The switch is stiff and makes a noise like a door closing. I have already started to like it.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">9 February</p>
+            <p class="entry-text">Walked the long way home past the allotments. Someone has planted runner beans in a perfect line. I stood there longer than a person should stand looking at beans.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">17 February</p>
+            <p class="entry-text">Tried to write in the morning. Ended up cleaning the kitchen instead. The page stayed blank but the sink has never been shinier.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">24 February</p>
+            <p class="entry-text">Rain all day. Read the same paragraph four times. Gave up and watched it come down.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">2 March</p>
+            <p class="entry-text">The man at the corner shop remembered I take the same bread. Small thing. Made the whole morning.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">11 March</p>
+            <p class="entry-text">Sat on the step with tea. Nothing happened for twenty minutes. It was the best part of the day.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="book" id="book-moving">
+        <header class="book-head">
+          <h2>Moving House</h2>
+          <p class="book-meta">June 2026 · four entries</p>
+        </header>
+        <div class="entries">
+          <article class="entry">
+            <p class="entry-date">14 June</p>
+            <p class="entry-text">Six boxes labelled kitchen. None of them contain anything I need.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">16 June</p>
+            <p class="entry-text">First night. The flat makes noises I don't know yet. Every one of them woke me.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">21 June</p>
+            <p class="entry-text">Found the box with the mugs. Had tea from the right mug for the first time in a week. Felt like arriving.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">28 June</p>
+            <p class="entry-text">The neighbour's cat has decided the windowsill is hers. I have decided not to argue.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="book" id="book-winter">
+        <header class="book-head">
+          <h2>Winter, Slowly</h2>
+          <p class="book-meta">December 2026 · four entries</p>
+        </header>
+        <div class="entries">
+          <article class="entry">
+            <p class="entry-date">2 December</p>
+            <p class="entry-text">Dark by four. I have stopped pretending to like it.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">9 December</p>
+            <p class="entry-text">Soup, again. The recipe is the same one my mother used and it still doesn't taste like hers.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">18 December</p>
+            <p class="entry-text">Frost on the inside of the window this morning. Wrote my name in it and immediately felt foolish.</p>
+          </article>
+          <article class="entry">
+            <p class="entry-date">31 December</p>
+            <p class="entry-text">Didn't stay up. Woke at half eleven to the sound of other people's fireworks, and went back to sleep content.</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p class="footer-mark">APPY</p>
+      <p class="footer-note">Sample books. Your own stay on your device.</p>
+      <p class="footer-copy">© <span id="year">2026</span></p>
+    </div>
+  </footer>
+
+  <script src="src/app.js"></script>
+  <script src="src/reader.js"></script>
+</body>
+</html>
