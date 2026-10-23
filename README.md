@@ -180,7 +180,7 @@ src/views/actions.js          create/move/delete flows and their copy
 src/views/missing.js          not-found view inside the app
 ```
 
-No build step, no dependencies, no framework. ES modules load directly.
+No build step or framework. ES modules and the vendored flip engine load directly.
 
 ## Deploy
 
@@ -205,3 +205,54 @@ python -m http.server 8123
 Use a local server rather than opening `index.html` directly: ES modules and
 IndexedDB both need an origin. Storage at `http://127.0.0.1:8123` is separate
 from the live site.
+
+## Flexible page turns
+
+The reader uses a locally hosted, MIT-licensed StPageFlip 2.0.7 engine. Drag
+any page or its top/bottom corner with a mouse to fold it diagonally, then drag
+across the spine to finish the turn, or return to the starting side to cancel.
+Corners lift on hover. Touch gestures, arrow buttons and keyboard navigation
+are supported, with instant keyboard/button turns under reduced motion.
+Desktop shows two entries; narrow screens show one. Long entries remain
+scrollable with the mouse wheel; List mode is available on every screen for
+continuous reading, touch scrolling, text selection and copying.
+
+No diary data or assets are sent to a flipbook service. The engine and its
+license are in `src/vendor/`. A small documented local lifecycle patch stops
+its animation loop on destroy, preventing background render loops after leaving
+the reader or resizing. There are no npm dependencies needed to run the site.
+
+`tests/reader.spec.mjs` checks real mouse drags, cancellation, transformed page
+geometry, keyboard navigation, boundaries and resizing at desktop/mobile widths.
+
+## Use a subdomain of your existing domain
+
+For example, to publish APPY at `appy.example.com`:
+
+1. Open this repository's **Settings → Pages**. Keep **Source: GitHub Actions**.
+2. Enter `appy.example.com` in **Custom domain**, then **Save**.
+3. In the DNS service that manages `example.com`, add:
+
+   | Type | Name / Host | Target / Value | TTL |
+   | --- | --- | --- | --- |
+   | CNAME | appy | mreyadishere-bit.github.io | Auto or 3600 |
+
+   Some providers require `appy.example.com` as the record name. The target must
+   have no `https://` and no `/APPY`. Replace a conflicting record for this exact
+   subdomain only. Your main domain's existing records stay as they are.
+4. Wait for the DNS check in GitHub Pages to succeed, then enable **Enforce HTTPS**
+   once the certificate is available. DNS propagation may take up to 24 hours.
+5. Open `https://appy.example.com` and test the library, writing, reading, and backup.
+6. Change the old GitHub Pages URL in `index.html`, `404.html`, `read.html`,
+   `write.html`, `robots.txt`, and `sitemap.xml` to the new public root URL.
+   Keep the trailing slash where present. These files contain canonical/social
+   URLs and crawler metadata; internal app links already use relative paths.
+
+This project deploys through Actions; a `CNAME` file is not required by that mode.
+Official instructions:
+https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site
+
+**Before moving:** export a backup from Settings on the old URL. Browser storage
+is scoped to an origin, so the new subdomain will initially have a separate diary.
+Import the backup in Settings on the new URL. Verify your entries there before
+clearing anything on the old URL. Each visitor's diary stays in their own browser.
