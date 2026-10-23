@@ -13,7 +13,7 @@ import { navigate } from "../ui/router.js";
 import * as store from "../core/store.js";
 import { formatDate, moodLabel, monthLabel, sanitize, titleOf } from "../core/model.js";
 import { missingView } from "./missing.js";
-import { startNewEntry } from "./actions.js";
+import { downloadBookWord, startNewEntry } from "./actions.js";
 
 const SCALES = [1, 1.12, 1.24];
 
@@ -95,6 +95,7 @@ export function readerView(route) {
           <button class="reader-tool reader-tool--list" type="button" data-action="list" aria-label="Toggle continuous reading" aria-pressed="${listMode}">
             ${icon("list")} <span class="reader-tool-label">List</span>
           </button>
+          <button class="reader-tool" type="button" data-action="word" aria-label="Download this book as Word" title="Download an editable Word book"><span>Word</span></button>
           <button class="reader-tool" type="button" data-action="scale" aria-label="Change text size">
             <span aria-hidden="true" style="font-family:var(--serif);font-size:0.95rem">Aa</span>
           </button>
@@ -486,6 +487,7 @@ export function readerView(route) {
     }
 
     const action = target.dataset.action;
+    if (action === "word") downloadBookWord(book.id, target, root);
     if (action === "close") close();
     if (action === "prev") turn(-1);
     if (action === "next") turn(1);

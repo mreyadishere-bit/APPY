@@ -256,3 +256,27 @@ https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pag
 is scoped to an origin, so the new subdomain will initially have a separate diary.
 Import the backup in Settings on the new URL. Verify your entries there before
 clearing anything on the old URL. Each visitor's diary stays in their own browser.
+
+
+## Download a book as Word
+
+Use **Download Word** on a book's page or **Word** in the reading room. The
+book menu also offers the same action. APPY creates a real editable `.docx`
+locally, including its cover colour and texture, title/subtitle, all live entries
+in oldest-first order, dates, moods, paper colour, headings, links, nested lists,
+inline formatting and page numbers. Deleted entries are excluded, and long
+entries continue onto additional pages without truncation. Each new entry starts
+on a fresh page. Word export is separate from the JSON backup format.
+
+The exporter uses the reader's light/dark palette and text-size setting. It selects
+an available typeface from the reader's font stack and writes it into Word styles;
+fonts are not embedded. The recipient needs that font installed for the closest
+match. Office applications may paginate differently. Page-fold animation and
+browser controls are not part of a Word document. Decorative paper/cover textures
+are embedded images; the writing remains editable text. No external converter,
+CDN, account or server upload is involved.
+
+`tests/word-export.spec.mjs` downloads files through the book page and reader,
+checks XML, formatting, Arabic direction, safe hyperlink relationships, long
+entries, deletion filtering, dark mode and empty-book generation. The exporter
+uses an OPC/OOXML package and a local ZIP writer; it adds no runtime dependencies.

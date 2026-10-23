@@ -9,7 +9,7 @@ import * as store from "../core/store.js";
 import { formatDate } from "../core/model.js";
 import { entriesGroupedHTML, moreLink } from "../ui/entry-list.js";
 import { missingView } from "./missing.js";
-import { bookMenu, bookSettingsFlow, readBook, startNewEntry } from "./actions.js";
+import { downloadBookWord, bookMenu, bookSettingsFlow, readBook, startNewEntry } from "./actions.js";
 
 const PAGE = 30;
 
@@ -52,6 +52,7 @@ export function bookView(bookId) {
     const action = event.target.closest("[data-action]");
     if (action) {
       const name = action.dataset.action;
+      if (name === "word") downloadBookWord(book.id, action, root);
       if (name === "read") readBook(book.id);
       if (name === "new-entry") startNewEntry({ bookId: book.id });
       if (name === "settings") bookSettingsFlow(store.bookById(book.id));
@@ -93,6 +94,7 @@ export function bookView(bookId) {
             <button class="btn btn--primary" type="button" data-action="read" ${
               stats.entries ? "" : "disabled"
             }>${icon("book")} Read this book</button>
+            <button class="btn" type="button" data-action="word" title="Download an editable Word book with your reader’s colours and typeface">Download Word</button>
             <button class="btn" type="button" data-action="new-entry">${icon("pen")} New entry</button>
             <button class="btn btn--ghost" type="button" data-action="settings">${icon("settings")} Settings</button>
             <button class="btn btn--ghost" type="button" data-action="menu" aria-label="More book actions" aria-haspopup="menu">⋯</button>

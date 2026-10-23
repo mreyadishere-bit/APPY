@@ -20,3 +20,4 @@ jobs:
           find src -name '*.js' -exec node --check {} \;
           python3 -m http.server 8123 > /tmp/appy-http.log 2>&1 &
           node tests/reader.spec.mjs
+          node tests/word-export.spec.mjs
