@@ -43,6 +43,9 @@ export function readerView(route) {
     if (found !== -1) index = found;
   }
 
+  let leaf = null;
+  let drag = null;
+  let frame = 0;
   let busy = false;
   let tocOpen = false;
   let listMode = store.settings().readerView === "list";
@@ -120,6 +123,7 @@ export function readerView(route) {
 
       <footer class="reader-foot" data-foot>
         <span class="reader-count" data-page-count></span>
+        <span class="reader-hint">Drag a page edge to turn · ← →</span>
         <span class="progress" aria-hidden="true"><span class="progress-fill" data-progress></span></span>
       </footer>
 
@@ -234,7 +238,11 @@ export function readerView(route) {
     updateTOC();
 
     root.addEventListener("click", onClick);
-    root.addEventListener("pointerdown", onPointerDown, { passive: true });
+    root.addEventListener("pointerdown", onPointerDown);
+    root.addEventListener("pointermove", onPointerMove, { passive: false });
+    root.addEventListener("pointercancel", onPointerUp);
+    root.addEventListener("lostpointercapture", onPointerUp);
+    window.addEventListener("resize", onResize);
     root.addEventListener("pointerup", onPointerUp, { passive: true });
     document.addEventListener("keydown", onKey);
     document.addEventListener("fullscreenchange", onFullscreenChange);
@@ -255,6 +263,7 @@ export function readerView(route) {
 
   function render() {
     const single = isSingle();
+    if (!single) index -= index % 2;
     const leftEntry = entries[index];
     const rightIndex = single ? index : index + 1;
     const rightEntry = entries[rightIndex];
@@ -269,7 +278,7 @@ export function readerView(route) {
       : `<div class="page-blank">The end</div>`;
 
     root.querySelector('[data-folio="left"]').textContent = single ? "" : String(index + 1);
-    root.querySelector('[data-folio="right"]').textContent = String(rightIndex + 1);
+    root.querySelector('[data-folio="right"]').textContent = rightEntry ? String(rightIndex + 1) : "";
 
     const count = root.querySelector("[data-page-count]");
     const visible = single ? 1 : Math.min(2, entries.length - index);
@@ -287,7 +296,7 @@ export function readerView(route) {
     const prev = root.querySelector('[data-action="prev"]');
     const next = root.querySelector('[data-action="next"]');
     if (prev) prev.disabled = index === 0;
-    if (next) next.disabled = index >= entries.length - 1;
+    if (next) next.disabled = destination(1) === index;
 
     const announce = root.querySelector("[data-announce]");
     if (announce && !tocOpen) {
@@ -297,60 +306,114 @@ export function readerView(route) {
     updateTOC();
   }
 
-  function turn(direction) {
-    if (busy || listMode) return;
-    const next = clamp(index + direction, 0, entries.length - 1);
-    if (next === index) return;
 
-    if (prefersReducedMotion()) {
-      index = next;
-      render();
-      return;
-    }
+  function destination(direction) {
+    return clamp(index + direction * (isSingle() ? 1 : 2), 0,
+      isSingle() ? entries.length - 1 : Math.floor((entries.length - 1) / 2) * 2);
+  }
 
-    const single = isSingle();
-    const source = root.querySelector(direction > 0 ? ".page--right" : ".page--left");
-    if (!source) {
-      index = next;
-      render();
-      return;
-    }
-
+  function beginTurn(direction) {
+    if (busy || listMode || tocOpen || destination(direction) === index) return false;
     busy = true;
-
-    const clone = source.cloneNode(true);
-    clone.removeAttribute("aria-label");
-    clone.setAttribute("aria-hidden", "true");
-    clone.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
-    clone.classList.add("leaf", direction > 0 ? "leaf--right" : "leaf--left");
-    if (single) clone.classList.add("leaf--single");
-
+    const single = isSingle();
     const bookEl = root.querySelector("[data-book]");
-    bookEl.append(clone);
-
-    index = next;
-    render();
-
-    let settled = false;
-    const settle = () => {
-      if (settled) return;
-      settled = true;
-      clone.remove();
-      busy = false;
-    };
-
-    const angle = direction > 0 ? -178 : 178;
-    try {
-      const animation = clone.animate(
-        [{ transform: "rotateY(0deg)" }, { transform: `rotateY(${angle}deg)` }],
-        { duration: 560, easing: "cubic-bezier(.2, .7, .2, 1)", fill: "forwards" }
-      );
-      animation.finished.then(settle).catch(settle);
-    } catch {
-      settle();
+    const source = root.querySelector(single || direction > 0 ? ".page--right" : ".page--left");
+    const next = destination(direction);
+    const width = source.getBoundingClientRect().width;
+    const height = source.getBoundingClientRect().height;
+    const sheet = h("div", { class: "paper-turn", "aria-hidden": "true" });
+    sheet.style.cssText = `width:${width}px;height:${height}px;left:${single || direction < 0 ? 0 : width}px`;
+    sheet.inert = true;
+    const backIndex = single ? next : direction > 0 ? next : next + 1;
+    const reverse = source.cloneNode(true);
+    reverse.querySelector(".page-inner").innerHTML = entryPageHTML(entries[backIndex]);
+    reverse.querySelector(".folio").textContent = String(backIndex + 1);
+    const strips = [];
+    for (let i = 0; i < 20; i++) {
+      const strip = h("div", { class: "paper-strip" });
+      strip.style.cssText = `width:${width / 20 + 0.7}px;height:${height}px`;
+      for (const [node, side] of [[source, "front"], [reverse, "back"]]) {
+        const face = h("div", { class: `paper-face paper-face--${side}` });
+        const copy = node.cloneNode(true);
+        copy.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
+        copy.style.cssText = `display:block;width:${width}px;height:${height}px;position:absolute;left:${-(side === "back" ? 19 - i : i) * width / 20}px`;
+        copy.querySelectorAll(".reader-entry").forEach(n => n.style.animation = "none");
+        face.append(copy);
+        strip.append(face);
+      }
+      sheet.append(strip);
+      strips.push(strip);
     }
+    bookEl.append(sheet);
+    // Reveal the next page under the lifting sheet. Commit the spread only on release.
+    const underIndex = single ? next : direction > 0 ? next + 1 : next;
+    source.querySelector(".page-inner").innerHTML = entryPageHTML(entries[underIndex]) || '<div class="page-blank">The end</div>';
+    source.querySelector(".folio").textContent = underIndex < entries.length ? String(underIndex + 1) : "";
+    leaf = { sheet, strips, width, direction, next, progress: 0, single };
+    bookEl.dataset.turning = "true";
+    paintTurn(0);
+    return true;
+  }
 
-    timers.push(setTimeout(settle, 820));
+  function paintTurn(progress) {
+    if (!leaf) return;
+    leaf.progress = progress;
+    const { strips, width, direction } = leaf;
+    const bend = Math.sin(progress * Math.PI) * 0.7;
+    let x = direction > 0 ? 0 : width;
+    let z = 0;
+    const step = width / strips.length;
+    const ordered = direction > 0 ? strips : [...strips].reverse();
+    ordered.forEach((strip, i) => {
+      const angle = -direction * (progress * Math.PI + bend * (i / strips.length - 0.5));
+      const dx = direction * step * Math.cos(angle);
+      const dz = -direction * step * Math.sin(angle);
+      const start = direction > 0 ? x : x + dx;
+      const depth = direction > 0 ? z : z + dz;
+      strip.style.transform = `translate3d(${start}px,0,${depth}px) rotateY(${angle}rad)`;
+      strip.style.setProperty("--shade", String(Math.abs(Math.sin(angle)) * 0.24));
+      x += dx;
+      z += dz;
+    });
+  }
+
+  function finishTurn(commit, immediate = false) {
+    if (!leaf) return;
+    cancelAnimationFrame(frame);
+    const from = leaf.progress;
+    const to = commit ? 1 : 0;
+    const started = performance.now();
+    const duration = immediate || prefersReducedMotion() ? 0 : 180 + Math.abs(to - from) * 380;
+    function tick(now) {
+      if (!leaf) return;
+      const t = duration ? Math.min(1, (now - started) / duration) : 1;
+      paintTurn(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) { frame = requestAnimationFrame(tick); return; }
+      if (commit) index = leaf.next;
+      leaf.sheet.remove();
+      leaf = null;
+      busy = false;
+      delete root.querySelector("[data-book]").dataset.turning;
+      render();
+    }
+    frame = requestAnimationFrame(tick);
+  }
+
+  function turn(direction) {
+    if (beginTurn(direction)) finishTurn(true);
+  }
+
+  function onResize() {
+    drag = null;
+    if (leaf) {
+      cancelAnimationFrame(frame);
+      leaf.sheet.remove();
+      leaf = null;
+      busy = false;
+      delete root.querySelector("[data-book]").dataset.turning;
+    }
+    if (!isSingle()) index -= index % 2;
+    render();
   }
 
   /* ---------- entry rendering ---------- */
@@ -469,6 +532,7 @@ export function readerView(route) {
   /* ---------- events ---------- */
 
   function onClick(event) {
+    if (busy) return;
     const target = event.target.closest("[data-action], [data-goto]");
     if (!target) {
       if (tocOpen && !event.target.closest("[data-toc]")) toggleTOC(false);
@@ -514,6 +578,7 @@ export function readerView(route) {
   }
 
   function onKey(event) {
+    if (busy) return;
     const active = document.activeElement;
     if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)) {
       return;
@@ -565,23 +630,45 @@ export function readerView(route) {
     }
   }
 
-  let startX = 0;
-  let startY = 0;
-  let tracking = false;
-
   function onPointerDown(event) {
-    if (event.pointerType === "mouse") return;
-    tracking = true;
-    startX = event.clientX;
-    startY = event.clientY;
+    const page = event.target.closest(".page");
+    if (!page || event.button !== 0 || !event.isPrimary || busy || listMode || tocOpen ||
+        event.target.closest("a,button,input,textarea")) return;
+    const rect = page.getBoundingClientRect();
+    const offset = event.clientX - rect.left;
+    // Reserve the outer margins for turning; prose remains selectable and scrollable.
+    const edge = Math.min(80, rect.width * 0.2);
+    let direction = page.classList.contains("page--right") ? 1 : -1;
+    if (isSingle()) direction = offset < edge ? -1 : 1;
+    if (direction > 0 ? offset < rect.width - edge : offset > edge) return;
+    if (destination(direction) === index) return;
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, direction, width: rect.width, started: performance.now(), active: false };
+    root.setPointerCapture(event.pointerId);
+  }
+
+  function onPointerMove(event) {
+    if (!drag || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!drag.active) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+      if (-dx * drag.direction < 5) return;
+      if (!beginTurn(drag.direction)) { drag = null; return; }
+      drag.active = true;
+    }
+    event.preventDefault();
+    paintTurn(clamp(-dx * drag.direction / drag.width, 0, 1));
   }
 
   function onPointerUp(event) {
-    if (!tracking) return;
-    tracking = false;
-    const dx = event.clientX - startX;
-    const dy = event.clientY - startY;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) turn(dx < 0 ? 1 : -1);
+    if (!drag || drag.id !== event.pointerId) return;
+    const current = drag;
+    drag = null;
+    if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
+    if (!current.active) return;
+    const distance = -(event.clientX - current.x) * current.direction;
+    const quick = distance > 45 && performance.now() - current.started < 280;
+    finishTurn(event.type === "pointerup" && (leaf.progress > 0.33 || quick));
   }
 
   function close() {
@@ -593,6 +680,12 @@ export function readerView(route) {
 
   function destroy() {
     timers.forEach((timer) => clearTimeout(timer));
+    cancelAnimationFrame(frame);
+    leaf?.sheet.remove();
+    window.removeEventListener("resize", onResize);
+    root.removeEventListener("pointermove", onPointerMove);
+    root.removeEventListener("pointercancel", onPointerUp);
+    root.removeEventListener("lostpointercapture", onPointerUp);
 
     root.removeEventListener("click", onClick);
     root.removeEventListener("click", onClickEmpty);
