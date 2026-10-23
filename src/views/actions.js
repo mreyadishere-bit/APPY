@@ -4,6 +4,7 @@
    actually do, and what the person is told afterwards.
    ============================================================ */
 
+import { buildBookWord, readerWordStyle, wordFilename } from "../export/word.js";
 import { h, esc } from "../ui/dom.js";
 import { confirmDialog, menu, modal, toast } from "../ui/kit.js";
 import { navigate } from "../ui/router.js";
@@ -62,6 +63,7 @@ export function bookMenu(book, anchor) {
   menu(anchor, [
     { label: "Open book", onSelect: () => navigate(`/book/${book.id}`) },
     { label: "Read book", onSelect: () => readBook(book.id) },
+    { label: "Download Word", onSelect: () => downloadBookWord(book.id) },
     "-",
     { label: "Book settings", onSelect: () => bookSettingsFlow(book) },
     { label: "Delete book", danger: true, onSelect: () => deleteBookFlow(book) },
@@ -494,4 +496,38 @@ export async function deleteFolderFlow(folder) {
       : `“${folder.name}” deleted.`
   );
   return true;
+}
+
+
+const wordExports = new Set();
+
+/** Snapshot all live entries, not just the visible or paginated rows. */
+export async function downloadBookWord(bookId, button = null, source = document.documentElement) {
+  if (wordExports.has(bookId)) return;
+  const book = store.bookById(bookId);
+  if (!book) { toast("That book is no longer available."); return; }
+  wordExports.add(bookId);
+  const label = button?.innerHTML;
+  if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); button.textContent = "Preparing Word…"; }
+  try {
+    const snapshot = structuredClone(book);
+    const entries = structuredClone(store.entriesIn({bookId,sort:"oldest"}));
+    const palette = readerWordStyle(snapshot, source);
+    palette.size = Math.round(24 * (store.settings().readerScale || 1));
+    // Let the busy state paint before constructing the document.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const blob = await buildBookWord(snapshot, entries, palette);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = wordFilename(snapshot.title);
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast("Your Word book is ready. Its typeface must be installed in Word to match exactly.");
+  } catch (error) {
+    console.error("APPY Word export failed", error);
+    toast("The Word file could not be prepared. Please try again.");
+  } finally {
+    wordExports.delete(bookId);
+    if (button) { button.disabled = false; button.removeAttribute("aria-busy"); button.innerHTML = label; }
+  }
 }
