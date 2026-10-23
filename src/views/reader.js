@@ -1,3 +1,4 @@
+import { PageFlip } from "../vendor/page-flip.js";
 /* ============================================================
    APPY — the reading room
    The cover opens, the spread settles, and one page turns at a
@@ -43,9 +44,10 @@ export function readerView(route) {
     if (found !== -1) index = found;
   }
 
-  let leaf = null;
-  let drag = null;
-  let frame = 0;
+  let engine = null;
+  let resizeTimer = 0;
+  let mountFrame = 0;
+  let disposed = false;
   let busy = false;
   let tocOpen = false;
   let listMode = store.settings().readerView === "list";
@@ -87,10 +89,10 @@ export function readerView(route) {
           <span>${esc(book.subtitle || "A diary")}</span>
         </h1>
         <div class="reader-bar-end">
-          <button class="reader-tool" type="button" data-action="toc" aria-expanded="false" aria-controls="tocPanel">
+          <button class="reader-tool" type="button" data-action="toc" aria-label="Contents" aria-expanded="false" aria-controls="tocPanel">
             ${icon("contents")} <span class="reader-tool-label">Contents</span>
           </button>
-          <button class="reader-tool reader-tool--list" type="button" data-action="list" aria-pressed="${listMode}">
+          <button class="reader-tool reader-tool--list" type="button" data-action="list" aria-label="Toggle continuous reading" aria-pressed="${listMode}">
             ${icon("list")} <span class="reader-tool-label">List</span>
           </button>
           <button class="reader-tool" type="button" data-action="scale" aria-label="Change text size">
@@ -103,16 +105,7 @@ export function readerView(route) {
       </header>
 
       <div class="reader-stage" data-stage>
-        <div class="book" data-book>
-          <section class="page page--left" aria-label="Left page">
-            <div class="page-inner" data-page="left"></div>
-            <span class="folio" data-folio="left"></span>
-          </section>
-          <section class="page page--right" aria-label="Right page">
-            <div class="page-inner" data-page="right"></div>
-            <span class="folio" data-folio="right"></span>
-          </section>
-        </div>
+        <div class="book-frame" data-frame><div class="book book--physics" data-book></div></div>
         <button class="turn turn--prev" type="button" data-action="prev" aria-label="Previous page">
           ${icon("chevronLeft")}
         </button>
@@ -123,7 +116,7 @@ export function readerView(route) {
 
       <footer class="reader-foot" data-foot>
         <span class="reader-count" data-page-count></span>
-        <span class="reader-hint">Drag a page edge to turn · ← →</span>
+        <span class="reader-hint">Drag a corner or page to turn · ← →</span>
         <span class="progress" aria-hidden="true"><span class="progress-fill" data-progress></span></span>
       </footer>
 
@@ -238,12 +231,8 @@ export function readerView(route) {
     updateTOC();
 
     root.addEventListener("click", onClick);
-    root.addEventListener("pointerdown", onPointerDown);
-    root.addEventListener("pointermove", onPointerMove, { passive: false });
-    root.addEventListener("pointercancel", onPointerUp);
-    root.addEventListener("lostpointercapture", onPointerUp);
     window.addEventListener("resize", onResize);
-    root.addEventListener("pointerup", onPointerUp, { passive: true });
+    mountFrame = requestAnimationFrame(mountBook);
     document.addEventListener("keydown", onKey);
     document.addEventListener("fullscreenchange", onFullscreenChange);
 
@@ -265,20 +254,7 @@ export function readerView(route) {
     const single = isSingle();
     if (!single) index -= index % 2;
     const leftEntry = entries[index];
-    const rightIndex = single ? index : index + 1;
-    const rightEntry = entries[rightIndex];
-
-    const left = root.querySelector('[data-page="left"]');
-    const right = root.querySelector('[data-page="right"]');
-    if (!left || !right) return;
-
-    left.innerHTML = single ? "" : entryPageHTML(leftEntry);
-    right.innerHTML = rightEntry
-      ? entryPageHTML(rightEntry)
-      : `<div class="page-blank">The end</div>`;
-
-    root.querySelector('[data-folio="left"]').textContent = single ? "" : String(index + 1);
-    root.querySelector('[data-folio="right"]').textContent = rightEntry ? String(rightIndex + 1) : "";
+    if (engine && engine.getCurrentPageIndex() !== index) engine.turnToPage(index);
 
     const count = root.querySelector("[data-page-count]");
     const visible = single ? 1 : Math.min(2, entries.length - index);
@@ -312,108 +288,65 @@ export function readerView(route) {
       isSingle() ? entries.length - 1 : Math.floor((entries.length - 1) / 2) * 2);
   }
 
-  function beginTurn(direction) {
-    if (busy || listMode || tocOpen || destination(direction) === index) return false;
-    busy = true;
+  function mountBook() {
+    if (disposed || listMode || !root.isConnected) return;
+    const frame = root.querySelector("[data-frame]");
+    const stage = root.querySelector("[data-stage]");
+    if (!frame || !stage) return;
+    engine?.destroy();
+    engine = null;
+    frame.innerHTML = '<div class="book book--physics" data-book></div>';
+    const host = frame.firstElementChild;
+    const style = getComputedStyle(stage);
+    const availableWidth = stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const availableHeight = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
     const single = isSingle();
-    const bookEl = root.querySelector("[data-book]");
-    const source = root.querySelector(single || direction > 0 ? ".page--right" : ".page--left");
-    const next = destination(direction);
-    const width = source.getBoundingClientRect().width;
-    const height = source.getBoundingClientRect().height;
-    const sheet = h("div", { class: "paper-turn", "aria-hidden": "true" });
-    sheet.style.cssText = `width:${width}px;height:${height}px;left:${single || direction < 0 ? 0 : width}px`;
-    sheet.inert = true;
-    const backIndex = single ? next : direction > 0 ? next : next + 1;
-    const reverse = source.cloneNode(true);
-    reverse.querySelector(".page-inner").innerHTML = entryPageHTML(entries[backIndex]);
-    reverse.querySelector(".folio").textContent = String(backIndex + 1);
-    const strips = [];
-    for (let i = 0; i < 20; i++) {
-      const strip = h("div", { class: "paper-strip" });
-      strip.style.cssText = `width:${width / 20 + 0.7}px;height:${height}px`;
-      for (const [node, side] of [[source, "front"], [reverse, "back"]]) {
-        const face = h("div", { class: `paper-face paper-face--${side}` });
-        const copy = node.cloneNode(true);
-        copy.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
-        copy.style.cssText = `display:block;width:${width}px;height:${height}px;position:absolute;left:${-(side === "back" ? 19 - i : i) * width / 20}px`;
-        copy.querySelectorAll(".reader-entry").forEach(n => n.style.animation = "none");
-        face.append(copy);
-        strip.append(face);
-      }
-      sheet.append(strip);
-      strips.push(strip);
-    }
-    bookEl.append(sheet);
-    // Reveal the next page under the lifting sheet. Commit the spread only on release.
-    const underIndex = single ? next : direction > 0 ? next + 1 : next;
-    source.querySelector(".page-inner").innerHTML = entryPageHTML(entries[underIndex]) || '<div class="page-blank">The end</div>';
-    source.querySelector(".folio").textContent = underIndex < entries.length ? String(underIndex + 1) : "";
-    leaf = { sheet, strips, width, direction, next, progress: 0, single };
-    bookEl.dataset.turning = "true";
-    paintTurn(0);
-    return true;
-  }
-
-  function paintTurn(progress) {
-    if (!leaf) return;
-    leaf.progress = progress;
-    const { strips, width, direction } = leaf;
-    const bend = Math.sin(progress * Math.PI) * 0.7;
-    let x = direction > 0 ? 0 : width;
-    let z = 0;
-    const step = width / strips.length;
-    const ordered = direction > 0 ? strips : [...strips].reverse();
-    ordered.forEach((strip, i) => {
-      const angle = -direction * (progress * Math.PI + bend * (i / strips.length - 0.5));
-      const dx = direction * step * Math.cos(angle);
-      const dz = -direction * step * Math.sin(angle);
-      const start = direction > 0 ? x : x + dx;
-      const depth = direction > 0 ? z : z + dz;
-      strip.style.transform = `translate3d(${start}px,0,${depth}px) rotateY(${angle}rad)`;
-      strip.style.setProperty("--shade", String(Math.abs(Math.sin(angle)) * 0.24));
-      x += dx;
-      z += dz;
+    const height = Math.max(180, Math.min(688, availableHeight));
+    const width = Math.max(140, Math.min(single ? 544 : 512, availableWidth / (single ? 1 : 2)));
+    frame.style.width = `${width * (single ? 1 : 2)}px`;
+    frame.style.height = `${height}px`;
+    host.innerHTML = entries.map((entry, i) => `
+      <section class="page physics-page" data-density="soft" aria-label="Page ${i + 1}">
+        <div class="page-inner">${entryPageHTML(entry)}</div>
+        <span class="folio">${i + 1}</span>
+      </section>`).join("");
+    // An even number keeps the final sheet soft and supplies its blank reverse side.
+    if (entries.length % 2) host.insertAdjacentHTML("beforeend", '<section class="page physics-page" data-density="soft" aria-label="Blank page"><div class="page-blank">The end</div></section>');
+    if (!single) index -= index % 2;
+    const flip = new PageFlip(host, {
+      width, height, size: "fixed", autoSize: false,
+      usePortrait: single, startPage: index, showCover: false,
+      drawShadow: true, maxShadowOpacity: 0.28, flippingTime: 850,
+      useMouseEvents: true, showPageCorners: !prefersReducedMotion(),
+      disableFlipByClick: false, mobileScrollSupport: false,
+      clickEventForward: true, swipeDistance: 25,
     });
-  }
-
-  function finishTurn(commit, immediate = false) {
-    if (!leaf) return;
-    cancelAnimationFrame(frame);
-    const from = leaf.progress;
-    const to = commit ? 1 : 0;
-    const started = performance.now();
-    const duration = immediate || prefersReducedMotion() ? 0 : 180 + Math.abs(to - from) * 380;
-    function tick(now) {
-      if (!leaf) return;
-      const t = duration ? Math.min(1, (now - started) / duration) : 1;
-      paintTurn(from + (to - from) * (1 - Math.pow(1 - t, 3)));
-      if (t < 1) { frame = requestAnimationFrame(tick); return; }
-      if (commit) index = leaf.next;
-      leaf.sheet.remove();
-      leaf = null;
-      busy = false;
-      delete root.querySelector("[data-book]").dataset.turning;
+    engine = flip;
+    flip.on("flip", event => {
+      index = Math.min(entries.length - 1, event.data);
       render();
-    }
-    frame = requestAnimationFrame(tick);
+    });
+    flip.on("changeState", event => {
+      busy = event.data === "flipping" || event.data === "user_fold";
+      root.dataset.turnState = event.data;
+    });
+    flip.loadFromHTML(host.querySelectorAll(".physics-page"));
+    root.dataset.engine = "paper";
+    render();
   }
 
   function turn(direction) {
-    if (beginTurn(direction)) finishTurn(true);
+    if (busy || listMode || !engine || destination(direction) === index) return;
+    if (prefersReducedMotion()) {
+      index = destination(direction);
+      render();
+    } else if (direction > 0) engine.flipNext("bottom");
+    else engine.flipPrev("bottom");
   }
 
   function onResize() {
-    drag = null;
-    if (leaf) {
-      cancelAnimationFrame(frame);
-      leaf.sheet.remove();
-      leaf = null;
-      busy = false;
-      delete root.querySelector("[data-book]").dataset.turning;
-    }
-    if (!isSingle()) index -= index % 2;
-    render();
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { busy = false; mountBook(); }, 120);
   }
 
   /* ---------- entry rendering ---------- */
@@ -490,6 +423,8 @@ export function readerView(route) {
     listMode = !listMode;
     store.updateSettings({ readerView: listMode ? "list" : "spread" }, { silent: true });
     applyList();
+    if (listMode) { engine?.destroy(); engine = null; busy = false; }
+    if (!listMode) mountFrame = requestAnimationFrame(mountBook);
   }
 
   /* ---------- text size ---------- */
@@ -630,47 +565,6 @@ export function readerView(route) {
     }
   }
 
-  function onPointerDown(event) {
-    const page = event.target.closest(".page");
-    if (!page || event.button !== 0 || !event.isPrimary || busy || listMode || tocOpen ||
-        event.target.closest("a,button,input,textarea")) return;
-    const rect = page.getBoundingClientRect();
-    const offset = event.clientX - rect.left;
-    // Reserve the outer margins for turning; prose remains selectable and scrollable.
-    const edge = Math.min(80, rect.width * 0.2);
-    let direction = page.classList.contains("page--right") ? 1 : -1;
-    if (isSingle()) direction = offset < edge ? -1 : 1;
-    if (direction > 0 ? offset < rect.width - edge : offset > edge) return;
-    if (destination(direction) === index) return;
-    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, direction, width: rect.width, started: performance.now(), active: false };
-    root.setPointerCapture(event.pointerId);
-  }
-
-  function onPointerMove(event) {
-    if (!drag || drag.id !== event.pointerId) return;
-    const dx = event.clientX - drag.x;
-    const dy = event.clientY - drag.y;
-    if (!drag.active) {
-      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
-      if (-dx * drag.direction < 5) return;
-      if (!beginTurn(drag.direction)) { drag = null; return; }
-      drag.active = true;
-    }
-    event.preventDefault();
-    paintTurn(clamp(-dx * drag.direction / drag.width, 0, 1));
-  }
-
-  function onPointerUp(event) {
-    if (!drag || drag.id !== event.pointerId) return;
-    const current = drag;
-    drag = null;
-    if (root.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
-    if (!current.active) return;
-    const distance = -(event.clientX - current.x) * current.direction;
-    const quick = distance > 45 && performance.now() - current.started < 280;
-    finishTurn(event.type === "pointerup" && (leaf.progress > 0.33 || quick));
-  }
-
   function close() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     navigate(`/book/${book.id}`);
@@ -680,17 +574,14 @@ export function readerView(route) {
 
   function destroy() {
     timers.forEach((timer) => clearTimeout(timer));
-    cancelAnimationFrame(frame);
-    leaf?.sheet.remove();
+    disposed = true;
+    cancelAnimationFrame(mountFrame);
+    clearTimeout(resizeTimer);
+    engine?.destroy();
+    engine = null;
     window.removeEventListener("resize", onResize);
-    root.removeEventListener("pointermove", onPointerMove);
-    root.removeEventListener("pointercancel", onPointerUp);
-    root.removeEventListener("lostpointercapture", onPointerUp);
-
     root.removeEventListener("click", onClick);
     root.removeEventListener("click", onClickEmpty);
-    root.removeEventListener("pointerdown", onPointerDown);
-    root.removeEventListener("pointerup", onPointerUp);
     document.removeEventListener("keydown", onKey);
     document.removeEventListener("keydown", onKeyEmpty);
     document.removeEventListener("fullscreenchange", onFullscreenChange);

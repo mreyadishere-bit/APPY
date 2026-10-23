@@ -180,7 +180,7 @@ src/views/actions.js          create/move/delete flows and their copy
 src/views/missing.js          not-found view inside the app
 ```
 
-No build step, no dependencies, no framework. ES modules load directly.
+No build step or framework. ES modules and the vendored flip engine load directly.
 
 ## Deploy
 
@@ -208,17 +208,22 @@ from the live site.
 
 ## Flexible page turns
 
-Drag the outer edge of either page with a mouse, pen, or touch. The sheet follows
-horizontal movement; release past one third of its width to complete the turn,
-or pull back to let it settle. A short, quick flick also completes a turn.
-The middle of each page remains available for text selection and vertical scrolling.
-Desktop spreads advance two entries at a time; narrow screens advance one.
-Keyboard and button controls remain available, including reduced-motion support.
-Long entries can be scrolled within their page or read in List mode.
+The reader uses a locally hosted, MIT-licensed StPageFlip 2.0.7 engine. Drag
+any page or its top/bottom corner with a mouse to fold it diagonally, then drag
+across the spine to finish the turn, or return to the starting side to cancel.
+Corners lift on hover. Touch gestures, arrow buttons and keyboard navigation
+are supported, with instant keyboard/button turns under reduced motion.
+Desktop shows two entries; narrow screens show one. Long entries remain
+scrollable with the mouse wheel; List mode is available on every screen for
+continuous reading, touch scrolling, text selection and copying.
 
-`tests/reader.spec.mjs` exercises drag completion and cancellation, keyboard
-navigation, book boundaries, and resizing at desktop and mobile widths. The
-Reader interaction checks workflow runs it in Chromium for pull requests.
+No diary data or assets are sent to a flipbook service. The engine and its
+license are in `src/vendor/`. A small documented local lifecycle patch stops
+its animation loop on destroy, preventing background render loops after leaving
+the reader or resizing. There are no npm dependencies needed to run the site.
+
+`tests/reader.spec.mjs` checks real mouse drags, cancellation, transformed page
+geometry, keyboard navigation, boundaries and resizing at desktop/mobile widths.
 
 ## Use a subdomain of your existing domain
 
